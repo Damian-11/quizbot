@@ -7,7 +7,7 @@ local players = game:GetService("Players")
 local localPlayer = players.LocalPlayer
 local blockedPlayers = {}
 local whiteListedplayers = {}
-local mode = "quiz"
+local mode = "Quiz"
 local answeredCorrectly = {}
 local submittedAnswer = {}
 local awaitingAnswer = false
@@ -20,6 +20,7 @@ local textChatService = game:GetService("TextChatService")
 local quizCooldown = false
 local answerOptionsSaid = 0 -- how many answer options have been said (0 = none, 1 = a, 2 = b, etc.). Prevents users from spamming letters before they even know what the corresponding answer option is
 local minMessageCooldown = 2.3 -- how much you need to wait to send another message to avoid ratelimit
+local whiteListEnabled = false
 
 local settings = {
     questionTimeout = 10,
@@ -375,7 +376,7 @@ end
 
 local function startChatListening(message: string, player: Player)
     local messageContent = string.upper(message) or ""
-    if not currentQuestion or questionAnsweredBy or table.find(userCooldowns, player.Name) or table.find(blockedPlayers, player.Name) or table.find(submittedAnswer, player.Name) or (#whiteListedplayers > 0 and not table.find(whiteListedplayers, player.Name)) then
+    if not currentQuestion or questionAnsweredBy or table.find(userCooldowns, player.Name) or table.find(blockedPlayers, player.Name) or table.find(submittedAnswer, player.Name) or (whiteListEnabled and not table.find(whiteListedplayers, player.Name)) then
         return
     end
     local matchAnswer
@@ -433,7 +434,7 @@ local function startChatListening(message: string, player: Player)
     end
     if matchingLetter or matchAnswer then
         if matchingLetter == currentQuestion.rightAnswer or matchAnswer == currentQuestion.answers[currentQuestion.rightAnswerIndex] then
-            if mode == "quiz" then
+            if mode == "Quiz" then
                 questionAnsweredBy = player
                 currentQuestion = nil
             else
@@ -445,7 +446,7 @@ local function startChatListening(message: string, player: Player)
                     pointManager.AddPoints(player, questionPoints)
                 end
             end
-        elseif mode == "quiz" then
+        elseif mode == "Quiz" then
             if awaitingAnswer then
                 requestSendMessage("❌ | "..player.DisplayName.." wrong answer. Try again in "..tostring(settings.userCooldown).." seconds")
             end
@@ -453,7 +454,7 @@ local function startChatListening(message: string, player: Player)
             task.delay(settings.userCooldown, function()
                 table.remove(userCooldowns, table.find(userCooldowns, player.Name))
             end)
-        elseif mode == "kahoot" then
+        elseif mode == "Kahoot" then
             table.insert(submittedAnswer, player.Name)
         end
     end
@@ -471,7 +472,7 @@ local function processMessage(player: Player, message: string)
             filtersInARow = 0
             antiFilteringDone = true
             return
-        elseif math.abs(#message - #messageBeforeFilter) > 5 then -- if the lenght is diffrent from messageBeforeFilter the message is unrelated. Also give some space for diffrence to account for roblox weirdness with filtered lengh being diffrent from original lenght
+        elseif math.abs(#message - #messageBeforeFilter) > 8 or not string.find(message, "#") then -- if the lenght is diffrent from messageBeforeFilter the message is unrelated. Also give some space for diffrence to account for roblox weirdness with filtered lengh being diffrent from original lenght. Also checks for # to see if at least part of the message got tagged
             return
         end
         filtersInARow += 1
@@ -574,7 +575,7 @@ local function awaitAnswer(targetQuestion)
         coroutine.resume(signTimeCoroutine)
     end
 
-    if mode == "quiz" then
+    if mode == "Quiz" then
         while questionAnsweredBy == nil and not timeIsOut and quizRunning do
             task.wait()
         end
@@ -1059,11 +1060,11 @@ end
 local quizModeRules = {"Each question has one right answer and one to three wrong answers.", "If you answer correctly, you will earn one point (or two points if the question is a double point question).", "If you answer incorrectly, you will have to wait "..tostring(settings.userCooldown).." seconds before you can submit another answer."}
 local kahootModeRules = {"Each question has one right answer and one to three wrong answers.", "You can only submit ONE answer per round.", "The first answer you submit is your final answer, and it can not be changed.", "You have "..tostring(settings.questionTimeout).." seconds to answer the question after all the options have been said.", "Every second after all the options have been said, the points you will gain for answering correctly decrease.", "In other words, the quicker you answer, the more points you will gain.", "Additionally, the first person who submits a correct answer gets 1.5x points."}
 local function sendRules()
-    if mode == "quiz" then
+    if mode == "Quiz" then
         Chat("📜 | Quiz mode rules:")
         task.wait(2)
         SplitIntoMessages(quizModeRules, " ")
-    elseif mode == "kahoot" then
+    elseif mode == "Kahoot" then
         Chat("📜 | Kahoot mode rules:")
         task.wait(2)
         SplitIntoMessages(kahootModeRules, " ")
@@ -1128,211 +1129,297 @@ local function getCategoryName(name) -- detects category from begging of string,
     end
 end
 ---------- UI ----------
-local libary
-local w
-local success = pcall(function()
-    libary = loadstring(game:HttpGet('https://raw.githubusercontent.com/Ausicius/WallyUIV3/main/library.lua'))() -- revamped WallyUIV3
-    w = libary:CreateWindow("Quiz script")
-end)
-if not success then-- if the first libary is down for any reason, use the second
-    local successLoadingBackup = pcall(function()
-        libary = loadstring(game:HttpGet('https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wall%20v3'))() -- fall back to other source if first option fails
-        w = libary:CreateWindow("Quiz script")
-    end)
-    if not successLoadingBackup then -- if both fail, ask user to repoort the bug on discord
-        notify("Error", "Failed to load UI libary. Please report this bug in the Discord server:", {
-            Callback = setclipboard("https://discord.gg/wm384KFFMC"),
-            Button1 = "Copy invite link"
-        })
-    end
-end
-local b = w:CreateFolder("Main controls")
+local library
 
-b:Label("MADE BY Damian11",{
-    TextSize = 15,
-    TextColor = Color3.fromRGB(255,255,255),
-    BgColor = Color3.fromRGB(69,69,69)
+local success = pcall(function()
+    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/patch-1/source.lua'))() -- Rayfield lib
+end)
+if not success then-- if the first libary is down for any reason, ask user to report it on discord
+    notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
+        Callback = setclipboard("https://discord.gg/wm384KFFMC"),
+        Button1 = "Copy invite link"
+    })
+end
+
+local window = library:CreateWindow({
+	Name = "Quizbot",
+	LoadingTitle = "Loading quizbot...",
+	LoadingSubtitle = "made by Damian11"
 })
 
+local mainTab = window:CreateTab("Main")
+mainTab:CreateLabel("Made by Damian11")
+mainTab:CreateSection("Quiz controls")
+
 local selectedCategory
-
-b:Box("Category", "string", function(value)
-    selectedCategory = getCategoryName(value)
-end)
-
-b:Dropdown("Category", categoryTable, true, function(mob)
-    selectedCategory = mob
-end)
-
-b:Button("Start quiz", function()
-    if categories[selectedCategory] then
-        startQuiz(selectedCategory)
+mainTab:CreateInput({
+    Name = "Category",
+    PlaceholderText = "Enter a category name",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(value)
+        selectedCategory = getCategoryName(value)
     end
-end)
+})
+mainTab:CreateDropdown({
+    Name = "Category",
+    Options = categoryTable,
+    CurrentOption = "Select a category",
+    Callback = function(option)
+        selectedCategory = option
+    end
+})
+mainTab:CreateButton({
+    Name = "Start quiz",
+    Callback = function()
+        if categories[selectedCategory] then
+            startQuiz(selectedCategory)
+        end
+    end
+})
+mainTab:CreateButton({
+    Name = "Stop quiz",
+    Callback = function()
+        quizCooldown = true
+        quizRunning = false
+        currentQuestion = nil
+        questionAnsweredBy = nil
+        awaitingAnswer = false
+        task.delay(5, function()
+            quizCooldown = false
+        end)
+    end
+})
+mainTab:CreateButton({
+    Name = "Send category list",
+    Callback = sendCategories
+})
+mainTab:CreateButton({
+    Name = "Send rules",
+    Callback = sendRules
+})
+mainTab:CreateButton({
+    Name = "Send current leaderboard",
+    Callback = function()
+        sendLeaderboard("Current quiz", "📜 | ")
+    end
+})
+mainTab:CreateButton({
+    Name = "Send current leaderboard",
+    Callback = function()
+        sendLeaderboard("Server", "🏆 | ")
+    end
+})
+mainTab:CreateButton({
+    Name = "Reset all points",
+    Callback = pointManager.ResetAllPoints
+})
 
-b:Button("Stop quiz", function()
-    quizCooldown = true
-    quizRunning = false
-    currentQuestion = nil
-    questionAnsweredBy = nil
-    awaitingAnswer = false
-    task.delay(5, function()
-        quizCooldown = false
-    end)
-end)
-
-b:Button("Send categories", function()
-    sendCategories()
-end)
-
-b:Button("Send rules", function()
-    sendRules()
-end)
-
-b:Button("Send current LB", function()
-    sendLeaderboard("Current quiz", "📜 | ")
-end)
-
-b:Button("Send server LB", function()
-    sendLeaderboard("Server", "🏆 | ")
-end)
-
-b:Button("Reset all points", function()
-    pointManager.ResetAllPoints()
-end)
-
-local c = w:CreateFolder("Player controls")
+local playerControlTab = window:CreateTab("Player controls")
+playerControlTab:CreateSection("Player controls")
 local targetPlayer
 
-c:Box("Target", "string", function(value)
-    targetPlayer = getTargetPlayer(value)
-end)
-
+playerControlTab:CreateInput({
+    Name = "Target",
+    PlaceholderText = "Enter target name",
+    Callback = function(value)
+        targetPlayer = getTargetPlayer(value)
+    end
+})
 local pointsToAdd
-c:Box("Amount of points", "number", function(value)
-    if value and tonumber(value) then
-        pointsToAdd = value
+playerControlTab:CreateInput({
+    Name = "Amount of points",
+    PlaceholderText = "Enter points amount",
+    Callback = function(value)
+        if value and tonumber(value) then
+            pointsToAdd = value
+        end
     end
-end)
-
-c:Button("Apply global points", function()
-    if pointsToAdd then
-        pointManager.AddPoints(targetPlayer, pointsToAdd, "Global")
+})
+playerControlTab:CreateButton({
+    Name = "Apply global points",
+    Callback = function()
+        if pointsToAdd then
+            pointManager.AddPoints(targetPlayer, pointsToAdd, "Global")
+        end
     end
-end)
-
-c:Button("Apply quiz points", function()
-    if pointsToAdd then
-        pointManager.AddPoints(targetPlayer, pointsToAdd, "CurrentQuiz")
+})
+playerControlTab:CreateButton({
+    Name = "Apply quiz points",
+    Callback = function()
+        if pointsToAdd then
+            pointManager.AddPoints(targetPlayer, pointsToAdd, "CurrentQuiz")
+        end
     end
-end)
-
-c:Button("Rest quiz points", function()
-    pointManager.ClearQuizPointsForPlayer(targetPlayer)
-end)
-
-c:Button("Rest global points", function()
-    pointManager.ClearGlobalPointsForPlayer(targetPlayer)
-end)
-
-c:Button("Reset all points", function()
-    pointManager.RemoveAccount(targetPlayer)
-end)
-
-c:Button("Block", function()
-    table.insert(blockedPlayers, targetPlayer.Name)
-end)
-
-c:Button("Unblock", function()
-    table.remove(blockedPlayers, table.find(blockedPlayers, targetPlayer.Name))
-end)
-
-c:Button("Unblock all", function()
-    table.clear(blockedPlayers)
-end)
-
-c:Button("Whitelist", function()
-    table.insert(whiteListedplayers, targetPlayer.Name)
-end)
-
-c:Button("Unwhitelist", function()
-    table.remove(whiteListedplayers, table.find(whiteListedplayers, targetPlayer.Name))
-end)
-
-c:Button("Disable whitelist", function()
-    table.clear(whiteListedplayers)
-end)
-
-local d = w:CreateFolder("Settings")
-
-d:Dropdown("Mode", {"Quiz", "Kahoot"}, true, function(mob)
-    mode = mob:lower()
-    if mob == "Quiz" then
-        Chat("❓ | Quiz mode enabled")
-    elseif mob == "Kahoot" then
-        Chat("✉️ | Kahoot mode enabled")
+})
+playerControlTab:CreateButton({
+    Name = "Rest quiz points",
+    Callback = function()
+        pointManager.ClearQuizPointsForPlayer(targetPlayer)
     end
-end)
-
-d:Toggle("Autoplay quizzes automatically", function(value)
-    settings.autoplay = value
-end)
-
-d:Box("Question timeout", "number", function(value)
-    if value then
-        settings.questionTimeout = value
+})
+playerControlTab:CreateButton({
+    Name = "Rest global points",
+    Callback = function()
+        pointManager.ClearGlobalPointsForPlayer(targetPlayer)
     end
-end)
-
-d:Box("User cooldown on wrong answer", "number", function(value)
-    if value then
-        settings.userCooldown = value
+})
+playerControlTab:CreateButton({
+    Name = "Reset global & quiz points",
+    Callback = function()
+        pointManager.RemoveAccount(targetPlayer)
     end
-end)
-
-d:Box("Automatically send leaderboard after questions", "number", function(value)
-    if value then
-        settings.sendLeaderBoardAfterQuestions = value
+})
+playerControlTab:CreateButton({
+    Name = "Block from participating",
+    Callback = function()
+        table.insert(blockedPlayers, targetPlayer.Name)
     end
-end)
-
-d:Toggle("Disable automatic leaderboards", function(value)
-    settings.automaticLeaderboards = not value
-end)
-
-d:Toggle("Disable automatic sending of current quiz LB", function(value)
-    settings.automaticCurrentQuizLeaderboard = not value
-end)
-
-d:Toggle("Disable automatic sending of server LB at the end of quiz", function(value)
-    settings.automaticServerQuizLeaderboard = not value
-end)
-
-d:Toggle("Do not repeat tagged messages", function(value)
-    if not oldChat then
-        settings.repeatTagged = not value
+})
+playerControlTab:CreateButton({
+    Name = "Unblock from participating",
+    Callback = function()
+        table.remove(blockedPlayers, table.find(blockedPlayers, targetPlayer.Name))
     end
-end)
+})
+playerControlTab:CreateButton({
+    Name = "Unblock all",
+    Callback = function()
+        table.clear(blockedPlayers)
+    end
+})
+playerControlTab:CreateToggle({
+    Name = "Enable whitelist",
+    CurrentValue = whiteListEnabled,
+    Callback = function(value)
+        whiteListEnabled = value
+    end
+})
+playerControlTab:CreateButton({
+    Name = "Whitelist",
+    Callback = function()
+        table.insert(whiteListedplayers, targetPlayer.Name)
+    end
+})
+playerControlTab:CreateButton({
+    Name = "Unwhitelist",
+    Callback = function()
+        table.remove(whiteListedplayers, table.find(whiteListedplayers, targetPlayer.Name))
+    end
+})
+playerControlTab:CreateButton({
+    Name = "Clear whitelist",
+    Callback = function()
+        table.clear(whiteListedplayers)
+    end
+})
+
+local settingsTab = window:CreateTab("Settings")
+settingsTab:CreateSection("Script options")
+
+settingsTab:CreateDropdown({
+    Name = "Mode",
+    Options = {"Quiz", "Kahoot"},
+    CurrentOption = mode,
+    Callback = function(option)
+        mode = option
+        if option == "Quiz" then
+            Chat("❓ | Quiz mode enabled")
+        elseif option == "Kahoot" then
+            Chat("✉️ | Kahoot mode enabled")
+        end
+    end
+})
+settingsTab:CreateToggle({
+    Name = "Autoplay quizzes automatically",
+    CurrentValue = settings.autoplay,
+    Callback = function(value)
+        settings.autoplay = value
+    end
+})
+settingsTab:CreateInput({
+    Name = "Question timeout",
+    PlaceholderText = settings.questionTimeout,
+    Callback = function(value)
+        if value and tonumber(value) then
+            settings.questionTimeout = tonumber(value)
+        end
+    end
+})
+settingsTab:CreateInput({
+    Name = "User cooldown on wrong answer",
+    PlaceholderText = settings.userCooldown,
+    Callback = function(value)
+        if value and tonumber(value) then
+            settings.userCooldown = tonumber(value)
+        end
+    end
+})
+settingsTab:CreateInput({
+    Name = "Automatically send leaderboard after # of questions",
+    PlaceholderText = settings.sendLeaderBoardAfterQuestions,
+    Callback = function(value)
+        if value and tonumber(value) then
+            settings.sendLeaderBoardAfterQuestions = tonumber(value)
+        end
+    end
+})
+settingsTab:CreateToggle({
+    Name = "Disable automatic leaderboards",
+    Callback = function(value)
+        settings.automaticLeaderboards = not value
+    end
+})
+settingsTab:CreateToggle({
+    Name = "Disable automatic sending of current quiz LB",
+    Callback = function(value)
+        settings.automaticCurrentQuizLeaderboard = not value
+    end
+})
+settingsTab:CreateToggle({
+    Name = "Disable automatic sending of server LB at the end of quiz",
+    Callback = function(value)
+        settings.automaticServerQuizLeaderboard = not value
+    end
+})
+settingsTab:CreateToggle({
+    Name = "Do not repeat tagged messages",
+    Callback = function(value)
+        if not oldChat then
+            settings.repeatTagged = not value
+        else
+            notify("Can't repeat tagged", "This game uses an unsupported chat system")
+        end
+    end
+})
 
 if boothGame then
-    d:Toggle("Disable sign status (booth game only)", function(value)
+    settingsTab:CreateToggle({
+    Name = "Disable sign status (booth game only)",
+    Callback = function(value)
         settings.signStatus = not value
-    end)
-    d:Toggle("Don't use roman numbers for sign timer (may get tagged)", function(value)
+    end})
+    settingsTab:CreateToggle({
+    Name = "Don't use roman numbers for sign timer (may get tagged)",
+    Callback = function(value)
         settings.romanNumbers = not value
-    end)
+    end})
 end
-
-local e = w:CreateFolder("Destroy GUI")
-
-e:Button("Disable connections", function()
-    if oldChat then
-        for _, connection in playerChatConnections do
-            joinConnection:Disconnect()
-            connection:Disconnect()
+settingsTab:CreateButton({
+    Name = "Destory UI and disable script",
+    Callback = function()
+        if oldChat then
+            for _, connection in playerChatConnections do
+                joinConnection:Disconnect()
+                connection:Disconnect()
+            end
+        else
+            chatConnection:Disconnect()
         end
-    else
-        chatConnection:Disconnect()
+        library:Destroy()
+        quizCooldown = true
+        quizRunning = false
+        currentQuestion = nil
+        questionAnsweredBy = nil
+        awaitingAnswer = false
     end
-end)
-e:DestroyGui()
+})
