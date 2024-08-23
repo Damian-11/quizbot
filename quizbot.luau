@@ -700,7 +700,7 @@ local foodAndDrink = categoryManager.New("Food and drink")
 foodAndDrink:Add("Which country is the largest producer of coffee in the world?", {"Brazil", "Vietnam", "Colombia", "Ethiopia"})
 foodAndDrink:Add("What is the name of the Italian dessert made from layers of sponge cake soaked in coffee and mascarpone cheese?", {"Tiramisu", "Maritozzo", "Cannoli", "Zabaglione"})
 foodAndDrink:Add("What is the main ingredient of the Spanish dish, Paella?", {"Rice", "Bread", "Pasta", "Chicken"})
-foodAndDrink:Add("What is the name of the fermented milk drink that is popular in Eastern Europe and Central Asia?", {"Kefir", "Yakult", "Lassi", "Ayran"})
+foodAndDrink:Add("What is the name of the fermented milk drink that is popular in Central Asia & Eastern Europe?", {"Kefir", "Karin", "Lassi", "Yogurt"})
 foodAndDrink:Add("Which country does feta cheese come from?", {"Greece", "Switzerland", "Spain", "France"}, 2)
 
 local trivia = categoryManager.New("Trivia")
