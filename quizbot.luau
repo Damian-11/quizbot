@@ -640,33 +640,33 @@ end
 
 --- Questions ---
 
-local flagsEasy = categoryManager.New("Flags-easy")
-flagsEasy:Add("What flag is this? 🇹🇷", {"Turkey", "Spain", "Greece", "Cyprus"})
-flagsEasy:Add("What flag is this? 🇪🇸", {"Spain", "Portugal", "Greece", "Mexico"})
-flagsEasy:Add("What flag is this? 🇵🇱", {"Poland", "Indonesia", "Austria", "Greenland"})
-flagsEasy:Add("What flag is this? 🇮🇳", {"India", "Pakistan", "Sri Lanka", "Afghanistan"})
-flagsEasy:Add("What flag is this? 🇳🇴", {"Norway", "Sweden", "Denmark", "Iceland"}, 2)
+local countriesEasy = categoryManager.New("Guess the country-easy")
+countriesEasy:Add("What country is this? 🇹🇷", {"Turkey", "Spain", "Greece", "Cyprus"})
+countriesEasy:Add("What country is this? 🇪🇸", {"Spain", "Portugal", "Greece", "Mexico"})
+countriesEasy:Add("What country is this? 🇵🇱", {"Poland", "Indonesia", "Austria", "Greenland"})
+countriesEasy:Add("What country is this? 🇮🇳", {"India", "Pakistan", "Sri Lanka", "Afghanistan"})
+countriesEasy:Add("What country is this? 🇳🇴", {"Norway", "Sweden", "Denmark", "Iceland"}, 2)
 
-local flagsEasy2 = categoryManager.New("Flags-easy2")
-flagsEasy2:Add("What flag is this? 🇫🇷", {"France", "England", "Netherlands", "Russia"})
-flagsEasy2:Add("What flag is this? 🇬🇷", {"Greece", "Serbia", "Argentina", "Spain"})
-flagsEasy2:Add("What flag is this? 🇦🇷", {"Argentina", "Honduras", "Chile", "Brazil"})
-flagsEasy2:Add("What flag is this? 🇨🇳", {"China", "Japan", "Bejing", "Vietnam"})
-flagsEasy2:Add("What flag is this? 🇷🇸", {"Serbia", "Bosnia", "Croatia", "Slovakia"}, 2)
+local countriesEasy2 = categoryManager.New("Guess the country-easy2")
+countriesEasy2:Add("What country is this? 🇫🇷", {"France", "England", "Netherlands", "Russia"})
+countriesEasy2:Add("What country is this? 🇬🇷", {"Greece", "Serbia", "Argentina", "Spain"})
+countriesEasy2:Add("What country is this? 🇦🇷", {"Argentina", "Honduras", "Chile", "Brazil"})
+countriesEasy2:Add("What country is this? 🇨🇳", {"China", "Japan", "Bejing", "Vietnam"})
+countriesEasy2:Add("What country is this? 🇷🇸", {"Serbia", "Bosnia", "Croatia", "Slovakia"}, 2)
 
-local flagsMedium = categoryManager.New("Flags-medium")
-flagsMedium:Add("What flag is this? 🇲🇽", {"Mexico", "Netherlands", "Iran", "Spain"})
-flagsMedium:Add("What flag is this? 🇵🇹", {"Portugal", "Brazil", "Madrid", "Spain"})
-flagsMedium:Add("What flag is this? 🇲🇦", {"Morocco", "Vietnam", "China", "Israel"}, 2)
-flagsMedium:Add("What flag is this? 🇧🇪", {"Belgium", "Germany", "France", "Romania"})
-flagsMedium:Add("What flag is this? 🇮🇩", {"Indonesia", "Poland", "Peru", "Switzerland"})
+local countriesMedium = categoryManager.New("Guess the country-medium")
+countriesMedium:Add("What country is this? 🇲🇽", {"Mexico", "Netherlands", "Iran", "Spain"})
+countriesMedium:Add("What country is this? 🇵🇹", {"Portugal", "Brazil", "Madrid", "Spain"})
+countriesMedium:Add("What country is this? 🇲🇦", {"Morocco", "Vietnam", "China", "Israel"}, 2)
+countriesMedium:Add("What country is this? 🇧🇪", {"Belgium", "Germany", "France", "Romania"})
+countriesMedium:Add("What country is this? 🇮🇩", {"Indonesia", "Poland", "Peru", "Switzerland"})
 
-local flagsHard = categoryManager.New("Flags-hard")
-flagsHard:Add("What flag is this? 🇩🇴", {"Dominican Republic", "Denmark", "Djibouti"})
-flagsHard:Add("What flag is this? 🇪🇷", {"Eritrea", "Ecuador", "El Salvador"})
-flagsHard:Add("What flag is this? 🇫🇮", {"Finland", "Sweden", "Falkland Islands"})
-flagsHard:Add("What flag is this? 🇿🇲", {"Zambia", "Zimbabwe", "Zaire"}, 2)
-flagsHard:Add("What flag is this? 🇸🇴", {"Somalia", "Solomon Islands", "Samoa"})
+local countriesHard = categoryManager.New("Guess the country-hard")
+countriesHard:Add("What country is this? 🇩🇴", {"Dominican Republic", "Denmark", "Djibouti"})
+countriesHard:Add("What country is this? 🇪🇷", {"Eritrea", "Ecuador", "El Salvador"})
+countriesHard:Add("What country is this? 🇫🇮", {"Finland", "Sweden", "Falkland Islands"})
+countriesHard:Add("What country is this? 🇿🇲", {"Zambia", "Zimbabwe", "Zaire"}, 2)
+countriesHard:Add("What country is this? 🇸🇴", {"Somalia", "Solomon Islands", "Samoa"})
 
 local science = categoryManager.New("Science")
 science:Add("The standard unit of measurement used for measuring force is which of the following?", {"Newton", "Mile", "Watt", "Kilogram"})
@@ -1132,7 +1132,7 @@ end
 local library
 
 local success = pcall(function()
-    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/patch-1/source.lua'))() -- Rayfield lib
+    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))() -- Rayfield lib
 end)
 if not success then-- if the first libary is down for any reason, ask user to report it on discord
     notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
@@ -1165,7 +1165,7 @@ mainTab:CreateDropdown({
     Options = categoryTable,
     CurrentOption = "Select a category",
     Callback = function(option)
-        selectedCategory = option
+        selectedCategory = option[1]
     end
 })
 mainTab:CreateButton({
