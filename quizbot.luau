@@ -262,7 +262,7 @@ local function SplitIntoMessages(itemTable: table, separtor: string, waitTime: n
         table.insert(messages, table.concat(tempItemList, separtor))
     end
     for messageIndex, message in messages do
-        local messageNumberString = string.format("[%d/%d]", messageIndex, #messages) -- [current message/amount of messages]
+        local messageNumberString = string.format("(%d/%d)", messageIndex, #messages) -- [current message/amount of messages]
         Chat(message.." "..messageNumberString)
         task.wait(waitTime or CalculateReadTime(message) * 0.7) -- multiplied by 0.7 because full read time is too long
         if quizRunning then
@@ -273,11 +273,49 @@ end
 --- Category OOP ---
 local categoryManager = {}
 local categories = {}
+categories.categoryList = {}
+categories.numberOfDifficulties = {}
 categoryManager.__index = categoryManager
 
-function categoryManager.New(categoryName)
-    categories[categoryName] = {}
-    local newCategory = categories[categoryName]
+--[[Category table reference:
+categories = {
+    categoryList = {
+        categoryName = {
+            easy = {{quiz1Questions}, {quiz2Questions}},
+            medium = {...},
+            ...
+        },
+        categoryName2 = {
+            easy = {{quiz1Questions}, {quiz2Questions}},
+            medium = {...},
+            ...
+        }
+    }
+    numberOfDifficulties = {
+        categoryName = 2
+        categoryName2 = 3
+        ...
+    }
+}
+]]--
+
+local difficultyOrder = {"", "easy", "medium", "hard"} -- the order in which difficulties should appear when sending the cateogry list
+function categoryManager.New(categoryName: string, difficulty: string?)
+    difficulty = difficulty or "" -- if difficulty is not specified, use blank
+    difficulty = string.lower(difficulty)
+    if not categories.categoryList[categoryName] then
+		categories.categoryList[categoryName] = {}
+        categories.numberOfDifficulties[categoryName] = 0
+	end
+    if not categories.categoryList[categoryName][difficulty] then
+		categories.categoryList[categoryName][difficulty] = {}
+        categories.numberOfDifficulties[categoryName] += 1
+        if not table.find(difficultyOrder, difficulty) then
+            table.insert(difficultyOrder, difficulty)
+        end
+	end
+    table.insert(categories.categoryList[categoryName][difficulty], {})
+    local newCategory = categories.categoryList[categoryName][difficulty][#categories.categoryList[categoryName][difficulty]] -- get the new category at the end of it's difficulty table
     setmetatable(newCategory, categoryManager)
     return newCategory
 end
@@ -640,28 +678,28 @@ end
 
 --- Questions ---
 
-local countriesEasy = categoryManager.New("Guess the country-easy")
+local countriesEasy = categoryManager.New("Guess the country", "easy")
 countriesEasy:Add("What country is this? 🇹🇷", {"Turkey", "Spain", "Greece", "Cyprus"})
 countriesEasy:Add("What country is this? 🇪🇸", {"Spain", "Portugal", "Greece", "Mexico"})
 countriesEasy:Add("What country is this? 🇵🇱", {"Poland", "Indonesia", "Austria", "Greenland"})
 countriesEasy:Add("What country is this? 🇮🇳", {"India", "Pakistan", "Sri Lanka", "Afghanistan"})
 countriesEasy:Add("What country is this? 🇳🇴", {"Norway", "Sweden", "Denmark", "Iceland"}, 2)
 
-local countriesEasy2 = categoryManager.New("Guess the country-easy2")
+local countriesEasy2 = categoryManager.New("Guess the country", "easy")
 countriesEasy2:Add("What country is this? 🇫🇷", {"France", "England", "Netherlands", "Russia"})
 countriesEasy2:Add("What country is this? 🇬🇷", {"Greece", "Serbia", "Argentina", "Spain"})
 countriesEasy2:Add("What country is this? 🇦🇷", {"Argentina", "Honduras", "Chile", "Brazil"})
 countriesEasy2:Add("What country is this? 🇨🇳", {"China", "Japan", "Bejing", "Vietnam"})
 countriesEasy2:Add("What country is this? 🇷🇸", {"Serbia", "Bosnia", "Croatia", "Slovakia"}, 2)
 
-local countriesMedium = categoryManager.New("Guess the country-medium")
+local countriesMedium = categoryManager.New("Guess the country", "medium")
 countriesMedium:Add("What country is this? 🇲🇽", {"Mexico", "Netherlands", "Iran", "Spain"})
 countriesMedium:Add("What country is this? 🇵🇹", {"Portugal", "Brazil", "Madrid", "Spain"})
 countriesMedium:Add("What country is this? 🇲🇦", {"Morocco", "Vietnam", "China", "Israel"}, 2)
 countriesMedium:Add("What country is this? 🇧🇪", {"Belgium", "Germany", "France", "Romania"})
 countriesMedium:Add("What country is this? 🇮🇩", {"Indonesia", "Poland", "Peru", "Switzerland"})
 
-local countriesHard = categoryManager.New("Guess the country-hard")
+local countriesHard = categoryManager.New("Guess the country", "hard")
 countriesHard:Add("What country is this? 🇩🇴", {"Dominican Republic", "Denmark", "Djibouti"})
 countriesHard:Add("What country is this? 🇪🇷", {"Eritrea", "Ecuador", "El Salvador"})
 countriesHard:Add("What country is this? 🇫🇮", {"Finland", "Sweden", "Falkland Islands"})
@@ -675,7 +713,7 @@ science:Add("Oil, natural gas and coal are examples of …", {"Fossil fuels", "R
 science:Add("Why do our pupils constrict in bright light?", {"To let in less light", "To give our eyes more oxygen", "To change our vision to 3D"})
 science:Add("What is cooling lava called?", {"Igneous rocks", "Magma", "Fossils"})
 
-local science2 = categoryManager.New("Science2")
+local science2 = categoryManager.New("Science")
 science2:Add("What is faster, sound or light?", {"Light", "Sound", "They travel at the same speed", "They don't move"})
 science2:Add("What is the main cause of seasons on the Earth?", {"The tilt of the Earth's axis in relation to the sun", "The speed that the Earth rotates around the sun", "Changes in amount of energy coming from the sun", "The distance between the Earth and the sun"}, 2)
 science2:Add("Who developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo Galilei"})
@@ -689,7 +727,7 @@ history:Add("Which of these historical events happened first?", {"The American R
 history:Add("What ancient civilization built the Machu Picchu complex?", {"Inca", "Aztec", "Maya", "Egypt"})
 history:Add("In what modern-day country was Karl Marx, the communist philosopher, born?", {"Germany", "France", "Russia", "China"}, 2)
 
-local history2 = categoryManager.New("History2")
+local history2 = categoryManager.New("History")
 history2:Add("The disease that killed a third of Europe's population in the 14th century is known as:", {"Plague (Black Death)", "Spanish Flu", "Smallpox", "Malaria"})
 history2:Add("What famous rifle is known in America as 'The Gun that Won the West?'", {"Winchester Model 1873", "Henry Repeating Rifle", "Colt Peacemake", "Remington Army Revolver"}, 2)
 history2:Add("Were Italy and the United Kingdom allies or enemies during World War One?", {"Allies", "Enmies"})
@@ -710,7 +748,7 @@ trivia:Add("Who painted the Mona Lisa?", {"Leonardo da Vinci", "Michelangelo", "
 trivia:Add("Which country is the only one to have a non-rectangular flag?", {"Nepal", "Switzerland", "Japan", "Qatar"})
 trivia:Add("'Bokmal' and 'Nynorsk' are the two official written forms of WHICH language?", {"Norwegian", "Italian", "Danish", "Spanish"}, 2)
 
-local trivia2 = categoryManager.New("Trivia2")
+local trivia2 = categoryManager.New("Trivia")
 trivia2:Add("Which animal is the national emblem of Australia?", {"Kangaroo", "Koala", "Emu", "Platypus"})
 trivia2:Add("What does the Richter scale measure?", {"Earthquake intensity", "Wind Speed", "Temperature", "Tornado Strength"}, 2)
 trivia2:Add("Which currency is used in Japan?", {"Yen", "Dollar", "Euro", "Pound"})
@@ -724,35 +762,35 @@ guessTheLanguage:Add("Guten Tag", {"German", "Tagalog", "Finnish", "Dutch"})
 guessTheLanguage:Add("こんにちは", {"Japanese", "Chinese", "Turkish", "Arabic"}, 2)
 guessTheLanguage:Add("नमस्ते", {"Hindi", "Indonesian", "Cantonese", "Nahuatl"})
 
-local capitals = categoryManager.New("Capitals")
+local capitals = categoryManager.New("Capitals", "easy")
 capitals:Add("What is the capital city of the USA?", {"Washington D.C.", "New York City", "Los Angeles", "Austin"})
-capitals:Add("What is the capital city of Slovakia?", {"Bratislava", "Frankfurt", "Dublin", "Brussels"}, 2)
+capitals:Add("What is the capital city of Finland?", {"Helsinki", "Stockholm", "Dublin", "Reykjavík"}, 2)
 capitals:Add("What is the capital city of Poland?", {"Warsaw", "Kiev", "Moscow", "Krakow"})
 capitals:Add("What is the capital city of Germany?", {"Berlin", "Frankfurt", "Hamburg", "Düsseldorf"})
 capitals:Add("What is the capital city of Canada?", {"Ottawa", "Toronto", "Vancouver", "Montreal"})
 
-local capitalsHard = categoryManager.New("Capitals-hard")
+local capitalsHard = categoryManager.New("Capitals", "hard")
 capitalsHard:Add("What is the capital of Belgium?", {"Brussels", "Liege", "Amsterdam"})
 capitalsHard:Add("What is the capital of Somalia?", {"Mogadishu", "Garoowe", "Berbera"})
 capitalsHard:Add("What is the capital city of Mongolia?", {"Ulaanbaatar", "Hanoi", "Seoul"})
 capitalsHard:Add("What is the capital city of Australia?", {"Canberra", "Sydney", "Perth"})
 capitalsHard:Add("What is the capital city of New Zealand?", {"Wellington", "Auckland", "Hamilton"})
 
-local geography = categoryManager.New("Geography")
+local geography = categoryManager.New("Geography", "easy")
 geography:Add("Which river flows through London?", {"River Thames", "River Severn", "River Trent"})
 geography:Add("On which continent is the Sahara Desert located?", {"Africa", "Asia", "Europe"})
 geography:Add("Which of these cities is NOT a national capital?", {"Sydney", "Oslo", "Wellington", "Bangkok"}, 2)
 geography:Add("Which of these continents has the largest land area?", {"Asia", "Africa", "Europe", "South America"})
 geography:Add("What is the smallest country in the world?", {"Vatican City", "Belgium", "Luxembourd"})
 
-local geographyMedium = categoryManager.New("Geography-medium")
+local geographyMedium = categoryManager.New("Geography", "medium")
 geographyMedium:Add("Which island is the largest in the world?", {"Greenland", "Madagascar", "Borneo", "New Guinea"})
 geographyMedium:Add("Which continent has the most countries?", {"Africa", "Europe", "Asia", "Australia"})
 geographyMedium:Add("Which one of the following countries is further north?", {"Scotland", "The Netherlands", "Belgium", "Poland"})
 geographyMedium:Add("What is the longest river in the world?", {"The Nile", "Amzon River", "Yangtze River", "Yellow River"})
 geographyMedium:Add("Which ocean is the deepest?", {"Pacific Ocean", "Atlantic Ocean", "Indian Ocean", "Arctic Ocean"}, 2)
 
-local geographyHard = categoryManager.New("Geography-hard")
+local geographyHard = categoryManager.New("Geography", "hard")
 geographyHard:Add("Which country has the longest coastline?", {"Canada", "Chile", "Norway", "Australia"})
 geographyHard:Add("Which continent is the only one without a desert?", {"Europe", "Asia", "North America", "Africa"})
 geographyHard:Add("Which one of the following countries is not an enclave?", {"Italy", "Vatican City", "San Marino", "Lasotho"}, 2)
@@ -766,7 +804,7 @@ gaming:Add("What is the name of the main character in the Legend of Zelda series
 gaming:Add("What video game did Mario, the Nintendo character, first appear in?", {"Donkey Kong", "Super Mario Bros", "Marios Cement Factory", "Mario Bros"}, 2)
 gaming:Add("What is the name of the virtual reality device developed by Valve?", {"Valve Index", "Oculus Rift", "Meta Quest", "Valve VR"})
 
-local gaming2 = categoryManager.New("Gaming2")
+local gaming2 = categoryManager.New("Gaming")
 gaming2:Add("What is the name of the fictional city where the Grand Theft Auto III and IV games are set?", {"Liberty City", "Vice City", "San Andreas", "Los Santos"})
 gaming2:Add("What is the name of the game developer who created Half-Life, Portal, and Counter-Strike?", {"Valve", "Blizzard", "Bethesda", "Rockstar"})
 gaming:Add("What is the name of the gaming console that was released by Nintendo in 2006 and featured motion controls?", {"Wii", "Switch", "GameCube", "DS"})
@@ -787,7 +825,7 @@ roblox:Add("What program do you use to make games on Roblox?", {"Roblox Studio",
 roblox:Add("Private servers were previously known as ...", {"VIP servers", "Personal servers", "Exclusive servers"})
 roblox:Add("Which YouTuber won the RB Battles season 1 championship?", {"KreekCraft", "Tofuu", "Seedeng", "BriannaPlayz"}, 2)
 
-local roblox2 = categoryManager.New("Roblox2")
+local roblox2 = categoryManager.New("Roblox")
 roblox2:Add("What is another name for the avatar shop?", {"Catalog", "Avatar Creator", "Avatar Editor"})
 roblox2:Add("What programming language do you need to use to create Roblox games?", {"Luau", "JavaScript", "Python", "PHP"}, 2)
 roblox2:Add("What is the name of the virtual reality headset that Roblox supports?", {"Oculus Rift", "Oculus Quest", "PlayStation VR", "Samsung Gear VR"})
@@ -841,7 +879,7 @@ WWI:Add("Which country made the first declaration of war in WWI?", {"Austria-Hun
 WWI:Add("What was the name of the British passenger ship that was sunk by a German submarine in 1915?", {"Lusitania", "Titanic", "Britannia", "Olympic"})
 WWI:Add("What was the nickname given to the type of warfare that involved digging trenches and fighting from them?", {"Trench warfare", "Guerrilla warfare", "Dirt warfare", "Siege warfare"})
 WWI:Add("What caused Great Britain to join World War I?", {"German troops marching through Belgium", "German bombing raids on London", "German use of illegal chemical weapons", "Germans sinking British civilian ships"})
-WWI:Add("What was the name of the alliance between Germany, Austria-Hungary and Italy?", {"The Central Powers", "The Axis Powers", "The Triple Entente", "The League of Nations"}, 2)
+WWI:Add("What was the name of the alliance between Germany, Austria-Hungary and Italy?", {"Triple Alliance", "The Axis Powers", "The Triple Entente", "The League of Nations"}, 2)
 
 local luau = categoryManager.New("Luau")
 luau:Add("What is the keyword for defining a function in Luau?", {"function", "def", "func", "sub"})
@@ -860,8 +898,8 @@ astronomy:Add("What is the name of the largest moon in our solar system?", {"Gan
 local memes = categoryManager.New("Memes")
 memes:Add("Which meme features a dog sitting in a burning room?", {"This is fine", "Doge", "Grumpy Cat", "Bad Luck Brian"})
 memes:Add("What is the name of the frog character that is often associated with the phrase 'feels good man'?", {"Pepe", "Kermit", "Frogger", "Freddy"}, 2)
-memes:Add("What is the term for a meme that looks low-quality and pixelated?", {"Deep-fried", "Dank", "Cringe", "Ironic"})
-memes:Add("What is the name of the meme that features a stock photo of a man looking at another woman while his girlfriend looks at him angrily?", {"Distracted Boyfriend", "Cheating Husband", "Jealous Girlfriend", "Flirting Couple"})
+memes:Add("What is the term for a meme that looks low-quality and pixelated?", {"Deep fried", "Dank", "Cringe", "Ironic"})
+memes:Add("Which animal is associated with the 'Doge' meme?", {"Shiba Inu", "Grumpy Cat", "Keyboard Cat", "Nyan Cat"})
 memes:Add("What is the name of the meme that features an elderly man with a forced smile?", {"Hide the Pain Harold", "Bad Luck Brian", "Grumpy Cat", "Success Kid"})
 
 local anarchy = categoryManager.New("Anarchy")
@@ -878,21 +916,21 @@ anime:Add("What is the name of the powerful notebook that can kill anyone whose 
 anime:Add("What is the main character's power in 'My Hero Academia'?", {"One For All", "All For One", "Half-Cold Half-Hot", "Explosion"}, 2)
 anime:Add("What is the name of the forest spirit that Satsuki and Mei befriend in My Neighbor Totoro?", {"Totoro", "Catbus", "Kodama", "Makkuro Kurosuke"})
 
-local scienceHard = categoryManager.New("Science-hard")
+local scienceHard = categoryManager.New("Science", "hard")
 scienceHard:Add("What is the name of the largest bone in the human body?", {"Femur", "Humerus", "Tibia", "Pelvis"})
-scienceHard:Add("What is the term for the amount of substance in a system that contains as many elementary entities as there are atoms in 12 grams of carbon-12?", {"Mole", "Gram", "Molecule", "Atom"})
+scienceHard:Add("Which of these particles is its own antiparticle?", {"Photon", "Proton", "Electron", "Neutron"})
 scienceHard:Add("What is the name of the phenomenon in which light is scattered by particles in a medium that are not much larger than the wavelength of the light?", {"Rayleigh scattering", "Diffraction", "Refraction", "Dispersion"}, 2)
 scienceHard:Add("What is the name of the branch of mathematics that deals with the properties and relationships of abstract entities such as numbers, symbols, sets, and functions?", {"Algebra", "Geometry", "Calculus", "Logic"})
 scienceHard:Add("What is the name of the unit of electric potential difference, electric potential energy per unit charge?", {"Volt", "Ampere", "Ohm", "Watt"})
 
-local mathCategory = categoryManager.New("Math")
+local mathCategory = categoryManager.New("Math", "easy")
 mathCategory:Add("What is the value of PI (rounded to two decimal places)?", {"3.14", "3.15", "3.16", "3.17"})
 mathCategory:Add("What is the name of the property that states a + b = b + a?", {"Commutative property", "Associative property", "Distributive property", "Identity property"}, 2)
 mathCategory:Add("What is the formula for the area of a circle?", {"pi * r^2", "2 * pi * r", "pi * d", "pi * r"})
 mathCategory:Add("What is the name of the branch of mathematics that studies shapes and angles?", {"Geometry", "Algebra", "Calculus", "Arithmetic"})
 mathCategory:Add("What is the value of x in the equation 2x + 5 = 13?", {"4", "3", "5", "6"})
 
-local mathHard = categoryManager.New("Math-hard")
+local mathHard = categoryManager.New("Math", "hard")
 mathHard:Add("What is the name of the theorem that states that a² + b² = c² for a right triangle?", {"Pythagorean theorem", "Fermat's last theorem", "Binomial theorem", "Euclid's theorem"})
 mathHard:Add("What is the derivative of e^x?", {"e^x", "x*e^(x-1)", "ln(x)", "1/e^x"})
 mathHard:Add("What is the name of the constant that is approximately equal to 2.71828?", {"Euler's number", "Golden ratio", " number", "Planck's constant"})
@@ -921,16 +959,68 @@ biology:Add("What are the four types of macromolecules found in living things?",
 biology:Add("What is the name of the molecule that carries genetic information in most living organisms?", {"DNA", "RNA", "ATP", "ADP"})
 
 local categoryTable = {}
-for k, v in pairs(categories) do
-    table.insert(categoryTable, k)
+local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
+
+for categoryName, difficulties in categories.categoryList do
+    for difficulty, quizzes in difficulties do
+        for index, quiz in quizzes do
+            local listName
+            if #quizzes > 1 then -- if multiple quizzes exist under the same name, add their category and index at the end to distinguish them
+                listName = categoryName.."-"..difficulty..index -- ex: flags-easy1, flags-easy2
+                table.insert(categoryTable, listName)
+            elseif categories.numberOfDifficulties[categoryName] > 1 then -- if multiple difficulties exist but only one quiz per difficulty, only add the difficulty at the end
+                listName = categoryName.."-"..difficulty -- ex: flags-hard
+                table.insert(categoryTable, listName)
+            else
+                listName = categoryName -- ex: flags
+                table.insert(categoryTable, listName)
+            end
+            categoryLookupTable[listName] = {quiz, difficulty}
+        end
+    end
 end
 table.sort(categoryTable)
 
+local function SortDifficulty(a, b)
+	local aOrder = table.find(difficultyOrder, a:match("^(%a+)%d*$"))
+	local bOrder = table.find(difficultyOrder, b:match("^(%a+)%d*$"))
+    if not aOrder or not bOrder then
+        return a < b
+    elseif aOrder == bOrder then
+		return a < b
+	else
+		return aOrder < bOrder
+	end
+end
+
+local categoriesToSend = {} -- format should be: food and drink, flags [easy, easy2, medium, hard], science [easy, hard]
+for categoryName, difficulties in categories.categoryList do -- indexing categories for sending with sendCategories() function
+    local formattedCategory = {}
+        local iterator = 0
+        for difficulty, quizzes in difficulties do
+            iterator += 1
+            if #quizzes > 1 then
+                for index, quiz in quizzes do
+                    table.insert(formattedCategory, difficulty..index) -- "easy1, easy2"
+                end
+            elseif categories.numberOfDifficulties[categoryName] > 1 then
+                table.insert(formattedCategory, difficulty) -- "easy"
+            end
+        end
+        table.sort(formattedCategory, SortDifficulty) -- make sure easy always comes before medium, etc.
+    if #formattedCategory > 1 then
+        formattedCategory = categoryName.." ["..table.concat(formattedCategory, ", ").."]"
+    else
+        formattedCategory = categoryName
+    end
+    table.insert(categoriesToSend, formattedCategory)
+end
+table.sort(categoriesToSend)
 local function sendCategories()
     if not quizRunning then
         Chat("❓ | Quiz topics:")
         task.wait(3)
-        SplitIntoMessages(categoryTable, ", ", 5)
+        SplitIntoMessages(categoriesToSend, ", ", 5)
     end
 end
 
@@ -990,16 +1080,17 @@ local function sendLeaderboard(type, message)
 end
 
 local autoplayChosenCategories = {} -- categories previously chosen by autoplay
+local autoPlayDifficulties = {} -- allowed difficulties by autoplay
 local function choseAutoplayCategory()
     local chosenCategory = categoryTable[math.random(#categoryTable)]
-    if table.find(autoplayChosenCategories, chosenCategory) then -- if category has been previously chosen, chose another category
+    if table.find(autoplayChosenCategories, chosenCategory) or not table.find(autoPlayDifficulties, categoryLookupTable[chosenCategory][2]) then -- if category has been previously chosen, chose another category
         return choseAutoplayCategory()
     else
         return chosenCategory
     end
 end
 
-local function startQuiz(category)
+local function startQuiz(category: string)
     if quizRunning or quizCooldown then
         return
     end
@@ -1009,7 +1100,7 @@ local function startQuiz(category)
     UpdateSignText(category)
     task.wait(3)
     local loopIterations = 0
-    for _, v in pairs(categories[category]) do
+    for _, v in pairs(categoryLookupTable[category][1]) do
         if not quizRunning then
             return
         end
@@ -1052,7 +1143,7 @@ local function startQuiz(category)
         if #autoplayChosenCategories == #categoryTable then -- if every category has been chosen, clear the chosencategories table
             table.clear(autoplayChosenCategories)
         end
-        task.wait(5)
+        task.wait(6)
         startQuiz(chosenCategory)
     end
 end
@@ -1077,7 +1168,7 @@ end)
 
 local function getPlayerByPlayerName(name)
     if name then
-        name = name:lower()
+        name = string.lower(name)
         for i, v in ipairs(players:GetPlayers()) do
             if string.lower(string.sub(v.Name, 1, #name)) == name then
                 return v
@@ -1120,9 +1211,9 @@ local function getTargetPlayer(name) -- try to get a target player from the name
     return target
 end
 
-local function getCategoryName(name) -- detects category from begging of string, for example: "gene" will return "general" category
+local function getCategoryName(name: string) -- detects category from begging of string, for example: "gene" will return "general" category
     name = name:lower()
-    for _, category in ipairs(categoryTable) do
+    for category, quiz in categoryLookupTable do
         if string.lower(string.sub(category, 1, #name)) == name then
             return category
         end
@@ -1132,7 +1223,7 @@ end
 local library
 
 local success = pcall(function()
-    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))() -- Rayfield lib
+    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/main/source.lua'))() -- Rayfield lib
 end)
 if not success then-- if the first libary is down for any reason, ask user to report it on discord
     notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
@@ -1171,7 +1262,7 @@ mainTab:CreateDropdown({
 mainTab:CreateButton({
     Name = "Start quiz",
     Callback = function()
-        if categories[selectedCategory] then
+        if categoryLookupTable[selectedCategory] then
             startQuiz(selectedCategory)
         end
     end
@@ -1204,7 +1295,7 @@ mainTab:CreateButton({
     end
 })
 mainTab:CreateButton({
-    Name = "Send current leaderboard",
+    Name = "Send server leaderboard",
     Callback = function()
         sendLeaderboard("Server", "🏆 | ")
     end
@@ -1336,6 +1427,21 @@ settingsTab:CreateToggle({
         settings.autoplay = value
     end
 })
+local dropdownAutoplayFilter = difficultyOrder
+dropdownAutoplayFilter[1] = "Missing difficulty" -- replace "" with "Missing difficulty" to prevent confusion
+settingsTab:CreateDropdown({
+    Name = "Autoplay filter (unselect all to disable filter)",
+    Options = dropdownAutoplayFilter,
+    MultipleOptions = true,
+    Callback = function(options)
+        local filteredTable = table.clone(options) -- since tables are passed by value (mutable), they need to be cloned to prevent modifying the original table
+        if table.find(filteredTable, "Missing difficulty") then
+            filteredTable[table.find(filteredTable, "Missing difficulty")] = ""
+        end
+        autoPlayDifficulties = filteredTable
+    end
+})
+
 settingsTab:CreateInput({
     Name = "Question timeout",
     PlaceholderText = settings.questionTimeout,
@@ -1415,11 +1521,12 @@ settingsTab:CreateButton({
         else
             chatConnection:Disconnect()
         end
-        library:Destroy()
         quizCooldown = true
         quizRunning = false
         currentQuestion = nil
         questionAnsweredBy = nil
         awaitingAnswer = false
+        task.wait(1)
+        library:Destroy()
     end
 })
