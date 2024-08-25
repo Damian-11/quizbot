@@ -94,7 +94,8 @@ local function roundNumber(num, numDecimalPlaces)
     return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 end
 
-local function notify(title: string, text: string, buttonOptions: table)
+local function notify(title: string, text: string, buttonOptions: table?)
+    buttonOptions = buttonOptions or {}
     starterGui:SetCore("SendNotification", {
         Title = title,
         Text = text,
@@ -270,6 +271,7 @@ local function SplitIntoMessages(itemTable: table, separtor: string, waitTime: n
         end
     end
 end
+
 --- Category OOP ---
 local categoryManager = {}
 local categories = {}
@@ -299,7 +301,7 @@ categories = {
 }
 ]]--
 
-local difficultyOrder = {"", "easy", "medium", "hard"} -- the order in which difficulties should appear when sending the cateogry list
+local difficultyOrder = {"", "easy", "medium", "hard"} -- the order in which difficulties should appear when sending the category list
 function categoryManager.New(categoryName: string, difficulty: string?)
     difficulty = difficulty or "" -- if difficulty is not specified, use blank
     difficulty = string.lower(difficulty)
@@ -329,6 +331,7 @@ end
 local pointManager = {}
 local userPoints = {}
 pointManager.__index = pointManager
+local UpdateUILeaderboard, ClearLeaderboardLabels -- defined later
 
 function pointManager.NewAccount(player)
     userPoints[player.Name] = {}
@@ -355,11 +358,10 @@ function pointManager.AddPoints(player, points: number, type: string)
         if quizRunning then
             playerAccount.CurrentQuizPoints += points
         end
-    elseif type == "Global" then
-        playerAccount.GlobalPoints += points
-    elseif type == "CurrentQuiz" then
-        playerAccount.CurrentQuizPoints += points
+    elseif playerAccount[type] then
+        playerAccount[type] += points
     end
+    UpdateUILeaderboard(type)
 end
 
 function pointManager.ClearQuizPointsForPlayer(player)
@@ -401,6 +403,8 @@ function pointManager.ResetAllPoints()
         v.GlobalPoints = 0
         v.CurrentQuizPoints = 0
     end
+    ClearLeaderboardLabels("CurrentQuizPoints")
+    ClearLeaderboardLabels("GlobalPoints")
 end
 -------
 
@@ -689,7 +693,7 @@ local countriesEasy2 = categoryManager.New("Guess the country", "easy")
 countriesEasy2:Add("What country is this? 🇫🇷", {"France", "England", "Netherlands", "Russia"})
 countriesEasy2:Add("What country is this? 🇬🇷", {"Greece", "Serbia", "Argentina", "Spain"})
 countriesEasy2:Add("What country is this? 🇦🇷", {"Argentina", "Honduras", "Chile", "Brazil"})
-countriesEasy2:Add("What country is this? 🇨🇳", {"China", "Japan", "Bejing", "Vietnam"})
+countriesEasy2:Add("What country is this? 🇻🇳", {"Vietnam", "China", "Japan", "Bejing"})
 countriesEasy2:Add("What country is this? 🇷🇸", {"Serbia", "Bosnia", "Croatia", "Slovakia"}, 2)
 
 local countriesMedium = categoryManager.New("Guess the country", "medium")
@@ -700,7 +704,7 @@ countriesMedium:Add("What country is this? 🇧🇪", {"Belgium", "Germany", "Fr
 countriesMedium:Add("What country is this? 🇮🇩", {"Indonesia", "Poland", "Peru", "Switzerland"})
 
 local countriesHard = categoryManager.New("Guess the country", "hard")
-countriesHard:Add("What country is this? 🇩🇴", {"Dominican Republic", "Denmark", "Djibouti"})
+countriesHard:Add("What country is this? 🇸🇮", {"Slovenia", "Slovakia", "Russia", "Serbia"})
 countriesHard:Add("What country is this? 🇪🇷", {"Eritrea", "Ecuador", "El Salvador"})
 countriesHard:Add("What country is this? 🇫🇮", {"Finland", "Sweden", "Falkland Islands"})
 countriesHard:Add("What country is this? 🇿🇲", {"Zambia", "Zimbabwe", "Zaire"}, 2)
@@ -766,7 +770,7 @@ local capitals = categoryManager.New("Capitals", "easy")
 capitals:Add("What is the capital city of the USA?", {"Washington D.C.", "New York City", "Los Angeles", "Austin"})
 capitals:Add("What is the capital city of Finland?", {"Helsinki", "Stockholm", "Dublin", "Reykjavík"}, 2)
 capitals:Add("What is the capital city of Poland?", {"Warsaw", "Kiev", "Moscow", "Krakow"})
-capitals:Add("What is the capital city of Germany?", {"Berlin", "Frankfurt", "Hamburg", "Düsseldorf"})
+capitals:Add("What is the capital city of Germany?", {"Berlin", "Frankfurt", "Hamburg", "Dusseldorf"})
 capitals:Add("What is the capital city of Canada?", {"Ottawa", "Toronto", "Vancouver", "Montreal"})
 
 local capitalsHard = categoryManager.New("Capitals", "hard")
@@ -823,7 +827,7 @@ roblox:Add("What was the original name of Roblox?", {"DynaBlocks", "SuperBlocks"
 roblox:Add("What is the name of Roblox's other virtual currency that has been removed since 2016?", {"Tix", "Builder Coins", "Ro-Points"})
 roblox:Add("What program do you use to make games on Roblox?", {"Roblox Studio", "Roblox Player", "Roblox Create", "Roblox Creator"})
 roblox:Add("Private servers were previously known as ...", {"VIP servers", "Personal servers", "Exclusive servers"})
-roblox:Add("Which YouTuber won the RB Battles season 1 championship?", {"KreekCraft", "Tofuu", "Seedeng", "BriannaPlayz"}, 2)
+roblox:Add("The RB Battles season 1 championship was won by which YouTuber?", {"KreekCraft", "Tofuu", "Seedeng", "BriannaPlayz"}, 2)
 
 local roblox2 = categoryManager.New("Roblox")
 roblox2:Add("What is another name for the avatar shop?", {"Catalog", "Avatar Creator", "Avatar Editor"})
@@ -849,7 +853,7 @@ animals:Add("Which of these “fish” is actually a fish?", {"Swordfish", "Star
 local sports = categoryManager.New("Sports")
 sports:Add("What sport is played on a field with 15 players on each team?", {"Rugby", "Soccer", "Cricket", "Lacrosse"})
 sports:Add("What is the name of the trophy awarded to the winner of the NBA Finals?", {"Larry O'Brien Trophy", "NBA Champion Trophy", "Stanley Cup", "World Series Trophy"}, 2)
-sports:Add("What sport uses a shuttlecock?", {"Badminton", "Tennis", "Squash", "Ping pong"})
+sports:Add("Which country is famous for inventing sumo wrestling?", {"Japan", "China", "India", "Thailand"})
 sports:Add("What sport involves sliding stones on a sheet of ice towards a target area?", {"Curling", "Bobsleigh", "Luge", "Ice hockey"}, 2)
 sports:Add("What sport is also known as table tennis?", {"Ping pong", "Badminton", "Squash", "Tennis"})
 
@@ -925,7 +929,7 @@ scienceHard:Add("What is the name of the unit of electric potential difference, 
 
 local mathCategory = categoryManager.New("Math", "easy")
 mathCategory:Add("What is the value of PI (rounded to two decimal places)?", {"3.14", "3.15", "3.16", "3.17"})
-mathCategory:Add("What is the name of the property that states a + b = b + a?", {"Commutative property", "Associative property", "Distributive property", "Identity property"}, 2)
+mathCategory:Add("The property that states that a + b = b + a has what name?", {"Commutative property", "Associative property", "Distributive property", "Identity property"}, 2)
 mathCategory:Add("What is the formula for the area of a circle?", {"pi * r^2", "2 * pi * r", "pi * d", "pi * r"})
 mathCategory:Add("What is the name of the branch of mathematics that studies shapes and angles?", {"Geometry", "Algebra", "Calculus", "Arithmetic"})
 mathCategory:Add("What is the value of x in the equation 2x + 5 = 13?", {"4", "3", "5", "6"})
@@ -1025,7 +1029,7 @@ local function sendCategories()
 end
 
 local function getDisplayNameByUsername(username)
-    local displayName = players:FindFirstChild(username).DisplayName
+    local displayName = players:FindFirstChild(username) and players:FindFirstChild(username).DisplayName
     return displayName
 end
 
@@ -1040,18 +1044,31 @@ local function sortUserPoints(type)
     return array
 end
 
+local medalEmojis = {"🥇 ", "🥈 ", "🥉 "}
 local function sendLeaderboard(type, message)
-    local array
-    if not message then
-        message = ""
-    end
+    local pointsArray
+    message = message or ""
     if type == "Current quiz" then
-        array = sortUserPoints("CurrentQuizPoints")
+        pointsArray = sortUserPoints("CurrentQuizPoints")
     else
-        array = sortUserPoints("GlobalPoints")
+        pointsArray = sortUserPoints("GlobalPoints")
     end
     task.wait(1.5)
-    if array[1] and array[1][2] > 0 then
+    for i = 1, 3 do
+        if pointsArray[i] and pointsArray[i][2] > 0 then
+            if i == 1 then
+                Chat(message..type.." leaderboard:")
+            end
+            local username = pointsArray[i][1]
+            local displayName = getDisplayNameByUsername(username) or "" -- set to empty string in case user left during quiz
+            local points = tostring(roundNumber(pointsArray[i][2], 1))
+            task.wait(2.5)
+            Chat(medalEmojis[i]..displayName.." (@"..username..") - "..points.." points")
+            UpdateSignText(medalEmojis[i]..displayName)
+        end
+    end
+    task.wait(2.5)
+    --[[if array[1] and array[1][2] > 0 then
         Chat(message..type.." leaderboard:")
         local username = array[1][1]
         local displayName = getDisplayNameByUsername(username)
@@ -1076,14 +1093,54 @@ local function sendLeaderboard(type, message)
                 task.wait(2.5)
             end
         end
+    end]]
+end
+local leaderboardLabels = {
+    CurrentQuizPoints = {},
+    GlobalPoints = {}
+}
+local function GetPointsAndUpdateLabels(type: string)
+    local pointsArray = sortUserPoints(type)
+    for index, label in leaderboardLabels[type] do
+        if pointsArray[index] and pointsArray[index][2] > 0 then
+            local username = pointsArray[index][1]
+            local displayName = getDisplayNameByUsername(username)
+            local points = tostring(roundNumber(pointsArray[index][2], 1))
+            label:Set(medalEmojis[index]..displayName.." (@"..username..") - "..points.." points")
+        end
+    end
+end
+ClearLeaderboardLabels = function(type: string) -- clears current quiz points in the UI leaderboard at the beginning of each quiz
+    for index, label in leaderboardLabels[type] do
+        label:Set(medalEmojis[index].." [Empty] - 0")
+    end
+end
+UpdateUILeaderboard = function(type: string) -- updates the labels for the leaderboard in the UI
+    if type ~= "All" and not leaderboardLabels[type] then
+        return
+    end
+    if type == "All" then
+        GetPointsAndUpdateLabels("GlobalPoints")
+        GetPointsAndUpdateLabels("CurrentQuizPoints")
+    else
+        GetPointsAndUpdateLabels(type)
     end
 end
 
 local autoplayChosenCategories = {} -- categories previously chosen by autoplay
+local numberOfCategoriesPerDifficulty = {}
 local autoPlayDifficulties = {} -- allowed difficulties by autoplay
+for categoryName, category in categoryLookupTable do -- find how many categories are in each difficulty group. Needed so autplay knows when it's out of categories
+    if not numberOfCategoriesPerDifficulty[category[2]] then
+        numberOfCategoriesPerDifficulty[category[2]] = 0
+    else
+        numberOfCategoriesPerDifficulty[category[2]] += 1
+    end
+end
 local function choseAutoplayCategory()
-    local chosenCategory = categoryTable[math.random(#categoryTable)]
-    if table.find(autoplayChosenCategories, chosenCategory) or not table.find(autoPlayDifficulties, categoryLookupTable[chosenCategory][2]) then -- if category has been previously chosen, chose another category
+    local chosenCategory = categoryTable[math.random(#categoryTable)] --TODO: table doesnt clear properly
+    local chosenCategoryDifficulty = categoryLookupTable[chosenCategory][2]
+    if (autoplayChosenCategories[chosenCategoryDifficulty] and table.find(autoplayChosenCategories[chosenCategoryDifficulty], chosenCategory)) or not table.find(autoPlayDifficulties, categoryLookupTable[chosenCategory][2]) then -- if category has been previously chosen, chose another category
         return choseAutoplayCategory()
     else
         return chosenCategory
@@ -1091,11 +1148,16 @@ local function choseAutoplayCategory()
 end
 
 local function startQuiz(category: string)
-    if quizRunning or quizCooldown then
+    if quizRunning then
+        notify("A quiz is currently running", "Stop the current quiz or wait for it to end")
+        return
+    elseif quizCooldown then
+        notify("Cooldown active", "Try again in a few seconds")
         return
     end
     quizRunning = true
     pointManager.ClearQuizPoints()
+    ClearLeaderboardLabels("CurrentQuizPoints")
     Chat('🚀 | Initiating "'..category..'" quiz...')
     UpdateSignText(category)
     task.wait(3)
@@ -1137,10 +1199,24 @@ local function startQuiz(category: string)
     UpdateSignText(endMessage)
     quizRunning = false
     if settings.autoplay then
-        table.insert(autoplayChosenCategories, category)
+        if not autoplayChosenCategories[categoryLookupTable[category][2]] then -- insert the category into autoplayChosenCategories[difficulty]
+            autoplayChosenCategories[categoryLookupTable[category][2]] = {category}
+        else
+            table.insert(autoplayChosenCategories[categoryLookupTable[category][2]], category)
+        end
         Chat("🎲 | Picking next category...")
         local chosenCategory = choseAutoplayCategory()
-        if #autoplayChosenCategories == #categoryTable then -- if every category has been chosen, clear the chosencategories table
+        local autoPlayComplete = true --true if every category has been played
+        for _, difficulty in autoPlayDifficulties do -- do this each time in case the user changes the autoplay filter
+            if autoplayChosenCategories[difficulty] and not #autoplayChosenCategories[difficulty] == numberOfCategoriesPerDifficulty[difficulty] then
+                autoPlayComplete = false
+                break
+            elseif not autoplayChosenCategories[difficulty] then -- if the category has not been chosen yet at all
+                autoPlayComplete = false
+                break
+            end
+        end
+        if autoPlayComplete then -- if every category has been chosen, clear the chosencategories table
             table.clear(autoplayChosenCategories)
         end
         task.wait(6)
@@ -1190,18 +1266,9 @@ end
 
 local function getTargetPlayer(name) -- try to get a target player from the name
     local target
-    if name == " " or name == "" then
-        -- if target player isn't specified, use the localplayer
-        target = localPlayer
-        return target
-    end
     local matchingPlayer = getPlayerByPlayerName(name)
     if name:lower() == "me" then
         target = localPlayer
-        return target
-    elseif name:lower() == "random" then
-        local playerTable = players:GetPlayers()
-        target = playerTable[math.random(#playerTable)]
         return target
     elseif matchingPlayer then
         target = matchingPlayer
@@ -1212,8 +1279,11 @@ local function getTargetPlayer(name) -- try to get a target player from the name
 end
 
 local function getCategoryName(name: string) -- detects category from begging of string, for example: "gene" will return "general" category
+    if #name < 2 then
+        return
+    end
     name = name:lower()
-    for category, quiz in categoryLookupTable do
+    for _, category in categoryTable do
         if string.lower(string.sub(category, 1, #name)) == name then
             return category
         end
@@ -1233,15 +1303,14 @@ if not success then-- if the first libary is down for any reason, ask user to re
 end
 
 local window = library:CreateWindow({
-	Name = "Quizbot",
+	Name = "Quizbot | Made by Damian11",
 	LoadingTitle = "Loading quizbot...",
 	LoadingSubtitle = "made by Damian11"
 })
 
 local mainTab = window:CreateTab("Main")
-mainTab:CreateLabel("Made by Damian11")
-mainTab:CreateSection("Quiz controls")
-
+mainTab:CreateSection("Category selection")
+local categoryLabel
 local selectedCategory
 mainTab:CreateInput({
     Name = "Category",
@@ -1249,6 +1318,9 @@ mainTab:CreateInput({
     RemoveTextAfterFocusLost = false,
     Callback = function(value)
         selectedCategory = getCategoryName(value)
+        if selectedCategory then
+            categoryLabel:Set("Selected category: "..selectedCategory)
+        end
     end
 })
 mainTab:CreateDropdown({
@@ -1257,13 +1329,23 @@ mainTab:CreateDropdown({
     CurrentOption = "Select a category",
     Callback = function(option)
         selectedCategory = option[1]
+        categoryLabel:Set("Selected category: "..selectedCategory)
     end
 })
+mainTab:CreateButton({
+    Name = "Send category list in chat",
+    Callback = sendCategories
+})
+
+mainTab:CreateSection("Quiz controls")
+categoryLabel = mainTab:CreateLabel("Selected category: None")
 mainTab:CreateButton({
     Name = "Start quiz",
     Callback = function()
         if categoryLookupTable[selectedCategory] then
             startQuiz(selectedCategory)
+        else
+            notify("Invalid category", "Select a valid category to start the quiz")
         end
     end
 })
@@ -1280,42 +1362,63 @@ mainTab:CreateButton({
         end)
     end
 })
-mainTab:CreateButton({
-    Name = "Send category list",
-    Callback = sendCategories
-})
-mainTab:CreateButton({
-    Name = "Send rules",
-    Callback = sendRules
-})
-mainTab:CreateButton({
-    Name = "Send current leaderboard",
-    Callback = function()
-        sendLeaderboard("Current quiz", "📜 | ")
-    end
-})
-mainTab:CreateButton({
-    Name = "Send server leaderboard",
+
+local leaderboardTab = window:CreateTab("Leaderborad")
+leaderboardTab:CreateSection("Server leaderboard (doesn't reset)")
+table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
+table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
+table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥉 [Empty] - 0"))
+leaderboardTab:CreateButton({
+    Name = "Send server leaderboard in chat",
     Callback = function()
         sendLeaderboard("Server", "🏆 | ")
     end
 })
-mainTab:CreateButton({
+
+leaderboardTab:CreateSection("Current quiz leaderboard (resets every quiz)")
+table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
+table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
+table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥉 [Empty] - 0"))
+leaderboardTab:CreateButton({
+    Name = "Send current quiz leaderboard in chat",
+    Callback = function()
+        sendLeaderboard("Current quiz", "📜 | ")
+    end
+})
+
+leaderboardTab:CreateSection("Reset points")
+leaderboardTab:CreateButton({
     Name = "Reset all points",
     Callback = pointManager.ResetAllPoints
 })
 
 local playerControlTab = window:CreateTab("Player controls")
-playerControlTab:CreateSection("Player controls")
 local targetPlayer
-
+local targetPlayerLabel
+playerControlTab:CreateSection("Select target")
 playerControlTab:CreateInput({
     Name = "Target",
     PlaceholderText = "Enter target name",
     Callback = function(value)
+        if #value < 1 then return end
         targetPlayer = getTargetPlayer(value)
+        if targetPlayer then
+            targetPlayerLabel:Set("Target: "..targetPlayer.Name)
+        end
     end
 })
+
+local function TargetExists(target)
+    if not target then
+        notify("Invalid target", "Specify a target player")
+        return false
+    else
+        return true
+    end
+end
+
+targetPlayerLabel = playerControlTab:CreateLabel("Target: None")
+playerControlTab:CreateSection("Modify points")
 local pointsToAdd
 playerControlTab:CreateInput({
     Name = "Amount of points",
@@ -1326,58 +1429,76 @@ playerControlTab:CreateInput({
         end
     end
 })
+local pointsType: string
+playerControlTab:CreateDropdown({
+    Name = "Apply as",
+    Options = {"Server points", "Current quiz points"},
+    Callback = function(option)
+        pointsType = option[1]
+    end
+})
 playerControlTab:CreateButton({
-    Name = "Apply global points",
+    Name = "Apply points",
     Callback = function()
+        if not TargetExists(targetPlayer) then return end
         if pointsToAdd then
-            pointManager.AddPoints(targetPlayer, pointsToAdd, "Global")
+            if pointsType == "Server points" then
+                pointManager.AddPoints(targetPlayer, pointsToAdd, "GlobalPoints")
+                notify("Points added", pointsToAdd.." server points have been added to "..targetPlayer.Name)
+            elseif pointsType == "Current quiz points" then
+                pointManager.AddPoints(targetPlayer, pointsToAdd, "CurrentQuizPoints")
+                notify("Points added", pointsToAdd.." current quiz points have been added to "..targetPlayer.Name)
+            else
+                notify("No point type selected", "Select either server points or current quiz points to add")
+            end
+        else
+            notify("Enter a point amount", "Enter an amount of points to add")
         end
-    end
-})
-playerControlTab:CreateButton({
-    Name = "Apply quiz points",
-    Callback = function()
-        if pointsToAdd then
-            pointManager.AddPoints(targetPlayer, pointsToAdd, "CurrentQuiz")
-        end
-    end
-})
-playerControlTab:CreateButton({
-    Name = "Rest quiz points",
-    Callback = function()
-        pointManager.ClearQuizPointsForPlayer(targetPlayer)
-    end
-})
-playerControlTab:CreateButton({
-    Name = "Rest global points",
-    Callback = function()
-        pointManager.ClearGlobalPointsForPlayer(targetPlayer)
     end
 })
 playerControlTab:CreateButton({
     Name = "Reset global & quiz points",
     Callback = function()
+        if not TargetExists(targetPlayer) then return end
         pointManager.RemoveAccount(targetPlayer)
+        notify("Points reset", "Successfully removed all points for "..targetPlayer.Name)
     end
 })
+
+playerControlTab:CreateSection("Access control")
 playerControlTab:CreateButton({
     Name = "Block from participating",
     Callback = function()
-        table.insert(blockedPlayers, targetPlayer.Name)
+        if not TargetExists(targetPlayer) then return end
+        if not table.find(blockedPlayers, targetPlayer.Name) then
+            table.insert(blockedPlayers, targetPlayer.Name)
+            notify("Player blocked", targetPlayer.Name.." has been blocked from participating")
+        else
+            notify("Can't block player", targetPlayer.Name.." is already blocked from participating")
+        end
     end
 })
 playerControlTab:CreateButton({
     Name = "Unblock from participating",
     Callback = function()
-        table.remove(blockedPlayers, table.find(blockedPlayers, targetPlayer.Name))
+        if not TargetExists(targetPlayer) then return end
+        if table.find(blockedPlayers, targetPlayer.Name) then
+            table.remove(blockedPlayers, table.find(blockedPlayers, targetPlayer.Name))
+            notify("Player unblocked", targetPlayer.Name.." is no longer blocked from participating")
+        else
+            notify("Can't unblock player", targetPlayer.Name.." is not blocked from participating")
+        end
     end
 })
 playerControlTab:CreateButton({
     Name = "Unblock all",
     Callback = function()
+        notify("Unblocked everyone", #blockedPlayers.." players have been unblocked")
         table.clear(blockedPlayers)
     end
 })
+
+playerControlTab:CreateSection("Whitelist and blacklist")
 playerControlTab:CreateToggle({
     Name = "Enable whitelist",
     CurrentValue = whiteListEnabled,
@@ -1388,25 +1509,41 @@ playerControlTab:CreateToggle({
 playerControlTab:CreateButton({
     Name = "Whitelist",
     Callback = function()
-        table.insert(whiteListedplayers, targetPlayer.Name)
+        if not TargetExists(targetPlayer) then return end
+        if not table.find(whiteListedplayers, targetPlayer.Name) then
+            table.insert(whiteListedplayers, targetPlayer.Name)
+            if whiteListEnabled then
+                notify("Player whitelisted", targetPlayer.Name.." has been whitelisted. The whitelist is currently enabled")
+            else
+                notify("Player whitelisted", targetPlayer.Name.." has been whitelisted, but the whitelist is currently disabled")
+            end
+        else
+            notify("Can't whitelist player", targetPlayer.Name.." is already on the whitelist")
+        end
     end
 })
 playerControlTab:CreateButton({
     Name = "Unwhitelist",
     Callback = function()
-        table.remove(whiteListedplayers, table.find(whiteListedplayers, targetPlayer.Name))
+        if not TargetExists(targetPlayer) then return end
+        if table.find(whiteListedplayers, targetPlayer.Name) then
+            table.remove(whiteListedplayers, table.find(whiteListedplayers, targetPlayer.Name))
+            notify("Player removed", targetPlayer.Name.." is no longer on the whitelist")
+        else
+            notify("Can't remove player", targetPlayer.Name.." is not on the whitelist")
+        end
     end
 })
 playerControlTab:CreateButton({
     Name = "Clear whitelist",
     Callback = function()
+        notify("Whitelist has been cleared", #whiteListedplayers.." players have been removed from the whitelist")
         table.clear(whiteListedplayers)
     end
 })
 
 local settingsTab = window:CreateTab("Settings")
-settingsTab:CreateSection("Script options")
-
+settingsTab:CreateSection("Select mode")
 settingsTab:CreateDropdown({
     Name = "Mode",
     Options = {"Quiz", "Kahoot"},
@@ -1420,6 +1557,12 @@ settingsTab:CreateDropdown({
         end
     end
 })
+settingsTab:CreateButton({
+    Name = "Send rules in chat",
+    Callback = sendRules
+})
+
+settingsTab:CreateSection("Autoplay")
 settingsTab:CreateToggle({
     Name = "Autoplay quizzes automatically",
     CurrentValue = settings.autoplay,
@@ -1435,13 +1578,16 @@ settingsTab:CreateDropdown({
     MultipleOptions = true,
     Callback = function(options)
         local filteredTable = table.clone(options) -- since tables are passed by value (mutable), they need to be cloned to prevent modifying the original table
-        if table.find(filteredTable, "Missing difficulty") then
+        if #options == 0 then -- if none selected, select all
+            filteredTable = difficultyOrder
+        elseif table.find(filteredTable, "Missing difficulty") then
             filteredTable[table.find(filteredTable, "Missing difficulty")] = ""
         end
         autoPlayDifficulties = filteredTable
     end
 })
 
+settingsTab:CreateSection("Time settings")
 settingsTab:CreateInput({
     Name = "Question timeout",
     PlaceholderText = settings.questionTimeout,
@@ -1460,8 +1606,10 @@ settingsTab:CreateInput({
         end
     end
 })
+
+settingsTab:CreateSection("Leaderboard settings")
 settingsTab:CreateInput({
-    Name = "Automatically send leaderboard after # of questions",
+    Name = "Automatically send current quiz leaderboard after # of questions",
     PlaceholderText = settings.sendLeaderBoardAfterQuestions,
     Callback = function(value)
         if value and tonumber(value) then
@@ -1470,7 +1618,7 @@ settingsTab:CreateInput({
     end
 })
 settingsTab:CreateToggle({
-    Name = "Disable automatic leaderboards",
+    Name = "Disable automatic sending of both leaderboards",
     Callback = function(value)
         settings.automaticLeaderboards = not value
     end
@@ -1482,13 +1630,16 @@ settingsTab:CreateToggle({
     end
 })
 settingsTab:CreateToggle({
-    Name = "Disable automatic sending of server LB at the end of quiz",
+    Name = "Disable automatic sending of server LB",
     Callback = function(value)
         settings.automaticServerQuizLeaderboard = not value
     end
 })
+
+settingsTab:CreateSection("Miscellaneous settings")
 settingsTab:CreateToggle({
     Name = "Do not repeat tagged messages",
+    CurrentValue = settings.repeatTagged,
     Callback = function(value)
         if not oldChat then
             settings.repeatTagged = not value
@@ -1497,7 +1648,6 @@ settingsTab:CreateToggle({
         end
     end
 })
-
 if boothGame then
     settingsTab:CreateToggle({
     Name = "Disable sign status (booth game only)",
@@ -1510,6 +1660,8 @@ if boothGame then
         settings.romanNumbers = not value
     end})
 end
+
+settingsTab:CreateSection("Disable script")
 settingsTab:CreateButton({
     Name = "Destory UI and disable script",
     Callback = function()
@@ -1526,7 +1678,6 @@ settingsTab:CreateButton({
         currentQuestion = nil
         questionAnsweredBy = nil
         awaitingAnswer = false
-        task.wait(1)
         library:Destroy()
     end
 })
