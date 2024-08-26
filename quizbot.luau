@@ -185,15 +185,12 @@ end
 local question = {}
 question.__index = question
 
-function question.New(quesitonText: string, options: table, value: number, correctAnswer: number)
+function question.New(quesitonText: string, options: table, value: number)
     local newQuestion = {}
     newQuestion.mainQuestion = quesitonText
     newQuestion.answers = options
-    if not correctAnswer then
-        correctAnswer = 1
-    end
-    newQuestion.rightAnswer = letters[correctAnswer]
-    newQuestion.rightAnswerIndex = correctAnswer
+    newQuestion.rightAnswer = letters[1]
+    newQuestion.rightAnswerIndex = 1
     if not value then
         newQuestion.value = 1
     else
@@ -264,6 +261,10 @@ local function SplitIntoMessages(itemTable: table, separtor: string, waitTime: n
     end
     for messageIndex, message in messages do
         local messageNumberString = string.format("(%d/%d)", messageIndex, #messages) -- [current message/amount of messages]
+        if messageIndex == 2 then
+            Chat("Resetting filter...") -- hacky solution that prevents the second message getting filtered
+            task.wait(4)
+        end
         Chat(message.." "..messageNumberString)
         task.wait(waitTime or CalculateReadTime(message) * 0.7) -- multiplied by 0.7 because full read time is too long
         if quizRunning then
@@ -322,8 +323,8 @@ function categoryManager.New(categoryName: string, difficulty: string?)
     return newCategory
 end
 
-function categoryManager:Add(quesitonText: string, options: table, value: number, correctAnswer: number)
-    local newQuestion = question.New(quesitonText, options, value, correctAnswer)
+function categoryManager:Add(quesitonText: string, options: table, value: number)
+    local newQuestion = question.New(quesitonText, options, value)
     table.insert(self, newQuestion)
 end
 
@@ -826,8 +827,8 @@ local roblox = categoryManager.New("Roblox")
 roblox:Add("What was the original name of Roblox?", {"DynaBlocks", "SuperBlocks", "XtraBlocks"})
 roblox:Add("What is the name of Roblox's other virtual currency that has been removed since 2016?", {"Tix", "Builder Coins", "Ro-Points"})
 roblox:Add("What program do you use to make games on Roblox?", {"Roblox Studio", "Roblox Player", "Roblox Create", "Roblox Creator"})
-roblox:Add("Private servers were previously known as ...", {"VIP servers", "Personal servers", "Exclusive servers"})
-roblox:Add("The RB Battles season 1 championship was won by which YouTuber?", {"KreekCraft", "Tofuu", "Seedeng", "BriannaPlayz"}, 2)
+roblox:Add("Roblox's private servers were previously known as which of the following?", {"VIP servers", "Personal servers", "Exclusive servers"})
+roblox:Add("Who won the RB Battles season 1 championship?", {"KreekCraft", "Tofuu", "Seedeng", "BriannaPlayz"}, 2)
 
 local roblox2 = categoryManager.New("Roblox")
 roblox2:Add("What is another name for the avatar shop?", {"Catalog", "Avatar Creator", "Avatar Editor"})
@@ -941,7 +942,7 @@ mathHard:Add("What is the name of the constant that is approximately equal to 2.
 mathHard:Add("What is the name of the sequence that starts with 1, 1, 2, 3, 5, 8, ...?", {"Fibonacci Sequence", "Arithmetic Sequence", "Geometric Sequence", "Harmonic Sequence"}, 2)
 mathHard:Add("What is the name of the branch of mathematics that deals with patterns and sequences?", {"Combinatorics", "Algebra", "Calculus", "Geometry"})
 
-local coldWar = categoryManager.New("Cold war")
+local coldWar = categoryManager.New("Cold War")
 coldWar:Add("In 1946 Winston Churchill popularized what term used to describe Soviet relations with Western powers?", {"Iron curtain", "Mutually assured destruction", "Quagmire", "Special relationship"})
 coldWar:Add("Frequently cited as the counterpart to the CIA, what was the name of the Soviet intelligence agency?", {"KGB", "ICBM", "SALT", "DMZ"})
 coldWar:Add("Devised in 1959, the DEFCON system has five stages of military readiness. Which DEFCON rating is used when a nuclear attack is imminent or already underway?", {"DEFCON 1", "DEFCON 3", "DEFCON 5"})
@@ -961,6 +962,20 @@ biology:Add("What is the smallest unit of life?", {"Cell", "Atom", "Molecule", "
 biology:Add("What is the term for a group of cells that perform a specific function?", {"Tissue", "Organ", "System", "Organism"})
 biology:Add("What are the four types of macromolecules found in living things?", {"Carbohydrates, proteins, lipids, and nucleic acids", "Glucose, amino acids, fatty acids, and nucleotides", "Starch, enzymes, fats, and DNA", "Sugars, peptides, oils, and RNA"}, 2)
 biology:Add("What is the name of the molecule that carries genetic information in most living organisms?", {"DNA", "RNA", "ATP", "ADP"})
+
+local sayings = categoryManager.New("Sayings and Idioms")
+sayings:Add("Which idiom means to reveal a secret?", {"Let the cat out of the bag", "Paint the town red", "Beat around the bush", "Bite the bullet"})
+sayings:Add("What does 'a piece of cake' refer to?", {"Something very easy", "A dessert", "A difficult task", "A small portion"})
+sayings:Add("Which idiom means to be in trouble?", {"In hot water", "On cloud nine", "Under the weather", "Out of the blue"})
+sayings:Add("What does 'hold your horses' mean?", {"Be patient", "Ride horses", "Work hard", "Go faster"})
+sayings:Add("What does 'break a leg' mean?", {"Good luck", "Actually break a leg", "Run away", "Take a break"}, 2)
+
+local internetSlang = categoryManager.New("Internet Slang")
+internetSlang:Add("What does 'LOL' stand for?", {"Laugh Out Loud", "Lots Of Love", "Living On Land", "Look Out Left"})
+internetSlang:Add("What does 'FOMO' stand for?", {"Fear Of Missing Out", "Friends Of My Office", "Fond Of Moving On", "Full Of Many Options"})
+internetSlang:Add("What does 'IMO' stand for?", {"In My Opinion", "Internet Mail Order", "It's Monday Obviously", "I'm Moving Out"})
+internetSlang:Add("What is the meaning of 'SMH'?", {"Shaking My Head", "So Much Hate", "Send More Help", "Smashing My Head"})
+internetSlang:Add("What does 'IIRC' stand for?", {"If I Remember Correctly", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
 
 local categoryTable = {}
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
@@ -1007,6 +1022,8 @@ for categoryName, difficulties in categories.categoryList do -- indexing categor
                 for index, quiz in quizzes do
                     table.insert(formattedCategory, difficulty..index) -- "easy1, easy2"
                 end
+            elseif categories.numberOfDifficulties[categoryName] > 1 and difficulty == "" then
+                table.insert(formattedCategory, difficulty.."1") -- to make sure that categories without a difficulty also get shown
             elseif categories.numberOfDifficulties[categoryName] > 1 then
                 table.insert(formattedCategory, difficulty) -- "easy"
             end
@@ -1609,7 +1626,7 @@ settingsTab:CreateInput({
 
 settingsTab:CreateSection("Leaderboard settings")
 settingsTab:CreateInput({
-    Name = "Automatically send current quiz leaderboard after # of questions",
+    Name = "Send current quiz LB after # of questions",
     PlaceholderText = settings.sendLeaderBoardAfterQuestions,
     Callback = function(value)
         if value and tonumber(value) then
@@ -1639,7 +1656,7 @@ settingsTab:CreateToggle({
 settingsTab:CreateSection("Miscellaneous settings")
 settingsTab:CreateToggle({
     Name = "Do not repeat tagged messages",
-    CurrentValue = settings.repeatTagged,
+    CurrentValue = not settings.repeatTagged,
     Callback = function(value)
         if not oldChat then
             settings.repeatTagged = not value
