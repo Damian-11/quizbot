@@ -191,11 +191,8 @@ function question.New(quesitonText: string, options: table, value: number)
     newQuestion.answers = options
     newQuestion.rightAnswer = letters[1]
     newQuestion.rightAnswerIndex = 1
-    if not value then
-        newQuestion.value = 1
-    else
-        newQuestion.value = value
-    end
+    value = value or 1
+    newQuestion.value = value
     setmetatable(newQuestion, question)
     return newQuestion
 end
@@ -323,7 +320,8 @@ function categoryManager.New(categoryName: string, difficulty: string?)
     return newCategory
 end
 
-function categoryManager:Add(quesitonText: string, options: table, value: number)
+function categoryManager:Add(quesitonText: string, options: table, value: number?, customQuestion: table?)
+    self = customQuestion or self
     local newQuestion = question.New(quesitonText, options, value)
     table.insert(self, newQuestion)
 end
@@ -720,7 +718,7 @@ science:Add("What is cooling lava called?", {"Igneous rocks", "Magma", "Fossils"
 
 local science2 = categoryManager.New("Science")
 science2:Add("What is faster, sound or light?", {"Light", "Sound", "They travel at the same speed", "They don't move"})
-science2:Add("What is the main cause of seasons on the Earth?", {"The tilt of the Earth's axis in relation to the sun", "The speed that the Earth rotates around the sun", "Changes in amount of energy coming from the sun", "The distance between the Earth and the sun"}, 2)
+science2:Add("What is the main cause of seasons on the Earth?", {"Earth's axis tilt in relation to the sun", "The speed that the Earth rotates around the sun", "Changes in amount of energy coming from the sun", "The distance between the Earth and the sun"}, 2)
 science2:Add("Who developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo Galilei"})
 science2:Add("Which of these is a major concern about the overuse of antibiotics?", {"The bacteria will become antibiotic-resitant", "There will be an antibiotic shortage", "Antibiotics can cause secondary infections", "Antibiotics will get into the water system"})
 science2:Add("What is the powerhouse of the cell?", {"Mitochondria", "Nucleus", "Cytoplasm", "Nucleic membrane"}, 2)
@@ -736,7 +734,7 @@ local history2 = categoryManager.New("History")
 history2:Add("The disease that killed a third of Europe's population in the 14th century is known as:", {"Plague (Black Death)", "Spanish Flu", "Smallpox", "Malaria"})
 history2:Add("What famous rifle is known in America as 'The Gun that Won the West?'", {"Winchester Model 1873", "Henry Repeating Rifle", "Colt Peacemake", "Remington Army Revolver"}, 2)
 history2:Add("Were Italy and the United Kingdom allies or enemies during World War One?", {"Allies", "Enmies"})
-history2:Add("How were Holy Roman Emperors chosen?", {"Elected by a small group of princes", "Chosen by the pope", "Democratic vote of the people"}, 2)
+history2:Add("How were Holy Roman Emperors chosen?", {"A small group of princes elected them", "They got chosen by the pope", "Democratic vote of the people"}, 2)
 history2:Add("Where and when was Siddhārtha Gautama, AKA Buddha, born?", {"Approx. 500 BC, Nepal", "Approx. 1 AD, Palestine", "Approx. 900 AD, China"})
 
 local foodAndDrink = categoryManager.New("Food and drink")
@@ -762,7 +760,7 @@ trivia2:Add("In sport, what does the term PGA refer to?", {"Professional Golfers
 
 local guessTheLanguage = categoryManager.New("Guess the language")
 guessTheLanguage:Add("Привет", {"Russian", "Norwegian", "Swedish", "Xhosa"})
-guessTheLanguage:Add("שָׁלוֹם", {"Hebrew", "Tamil", "Lao", "Mandarin"})
+guessTheLanguage:Add("בוקר טוב", {"Hebrew", "Tamil", "Lao", "Mandarin"})
 guessTheLanguage:Add("Guten Tag", {"German", "Tagalog", "Finnish", "Dutch"})
 guessTheLanguage:Add("こんにちは", {"Japanese", "Chinese", "Turkish", "Arabic"}, 2)
 guessTheLanguage:Add("नमस्ते", {"Hindi", "Indonesian", "Cantonese", "Nahuatl"})
@@ -841,7 +839,7 @@ local english = categoryManager.New("English")
 english:Add("I'm very happy _____ in India. I really miss being there.", {"to have lived", "to live", "to be living", "to be lived"})
 english:Add("They didn't reach an agreement ______ their differences.", {"on account of", "with", "because", "owing"})
 english:Add("I wish I _____ those words. But now it's too late.", {"had never said", "never said", "have never said", "not having said"}, 2)
-english:Add("She was working on her computer with her baby next to _____.", {"her", "herself", "her own", "hers"})
+english:Add("She was working on her computer with her baby next to _____.", {"her", "them", "her own", "hers"})
 english:Add("_____ in trying to solve this problem. It's clearly unsolvable.", {"There's no point", "It's no point", "There isn't point", "It's no need"})
 
 local animals = categoryManager.New("Animals")
@@ -980,7 +978,7 @@ internetSlang:Add("What does 'IIRC' stand for?", {"If I Remember Correctly", "It
 local categoryTable = {}
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
 
-for categoryName, difficulties in categories.categoryList do
+local function UpdateCategoryTable(categoryName: string, difficulties: table)
     for difficulty, quizzes in difficulties do
         for index, quiz in quizzes do
             local listName
@@ -998,6 +996,10 @@ for categoryName, difficulties in categories.categoryList do
         end
     end
 end
+
+for categoryName, difficulties in categories.categoryList do
+    UpdateCategoryTable(categoryName, difficulties)
+end
 table.sort(categoryTable)
 
 local function SortDifficulty(a, b)
@@ -1012,8 +1014,7 @@ local function SortDifficulty(a, b)
 	end
 end
 
-local categoriesToSend = {} -- format should be: food and drink, flags [easy, easy2, medium, hard], science [easy, hard]
-for categoryName, difficulties in categories.categoryList do -- indexing categories for sending with sendCategories() function
+local function AddToSendCategoryTable(categoryName: string, difficulties: string): string
     local formattedCategory = {}
         local iterator = 0
         for difficulty, quizzes in difficulties do
@@ -1034,7 +1035,12 @@ for categoryName, difficulties in categories.categoryList do -- indexing categor
     else
         formattedCategory = categoryName
     end
-    table.insert(categoriesToSend, formattedCategory)
+    return formattedCategory
+end
+
+local categoriesToSend = {} -- format should be: food and drink, flags [easy, easy2, medium, hard], science [easy, hard]
+for categoryName, difficulties in categories.categoryList do -- indexing categories for sending with sendCategories() function
+    table.insert(categoriesToSend, AddToSendCategoryTable(categoryName, difficulties))
 end
 table.sort(categoriesToSend)
 local function sendCategories()
@@ -1043,6 +1049,67 @@ local function sendCategories()
         task.wait(3)
         SplitIntoMessages(categoriesToSend, ", ", 5)
     end
+end
+
+local categoryDropdown
+local function UpdateCategory(categoryName: string) -- reindexes the specified category
+    for i=1, #categoriesToSend do
+        if string.match(categoriesToSend[i], "^"..categoryName.."{"..#categoryName.."}") then -- remove all of the category's quizzes to prevent duplicates
+            table.remove(categoriesToSend, i)
+        end
+    end
+    local difficulties = categories.categoryList[categoryName]
+    table.insert(categoriesToSend, AddToSendCategoryTable(categoryName, difficulties))
+    table.sort(categoriesToSend)
+    if table.find(categoryTable, categoryName) then
+        table.remove(categoryTable, table.find(categoryTable, categoryName))
+    end
+    UpdateCategoryTable(categoryName, difficulties)
+    categoryDropdown:Set(categoryTable[#categoryTable])
+    table.sort(categoryTable)
+end
+
+------------- Custom question OOP -------------
+getgenv().CustomQuestionManager = {}
+local CustomQuestionManager = getgenv().CustomQuestionManager
+CustomQuestionManager.__index = CustomQuestionManager
+local categoryNames = {}
+
+function CustomQuestionManager.New(categoryName: string, difficulty: string?)
+    if type(categoryName) == "string" then
+        if not type(difficulty) == "string" then
+            difficulty = "" -- if difficulty is not a string, use default (blank)
+        end
+        local newCategory = setmetatable(categoryManager.New(categoryName, difficulty), CustomQuestionManager)
+        categoryNames[newCategory] = categoryName
+        return newCategory
+    else
+        print("Custom quiz error | CategoryName is not a string")
+    end
+    notify("Can't add custom quiz", "See the output for more information")
+end
+
+function CustomQuestionManager:Add(quesitonText: string, options: table, value: number?)
+    if type(quesitonText) == "string" then
+        if type(options) == "table" then
+            if #options > 1 then
+                if type(value) == "nil" or type(value) == "number" then
+                    categoryManager:Add(quesitonText, options, value, self)
+                    UpdateCategory(categoryNames[self])
+                    return
+                else
+                    print("Custom quiz error | question value needs to be a number or nil")
+                end
+            else
+                print("Custom quiz error | options table need to have more than one option")
+            end
+        else
+            print("Custom quiz error | options is not a table")
+        end
+    else
+        print("Custom quiz error | quesitonText is not a string")
+    end
+    notify("Can't add custom question", "See the output for more information")
 end
 
 local function getDisplayNameByUsername(username)
@@ -1340,7 +1407,7 @@ mainTab:CreateInput({
         end
     end
 })
-mainTab:CreateDropdown({
+categoryDropdown = mainTab:CreateDropdown({
     Name = "Category",
     Options = categoryTable,
     CurrentOption = "Select a category",
@@ -1698,3 +1765,8 @@ settingsTab:CreateButton({
         library:Destroy()
     end
 })
+
+----
+local trivia3 = CustomQuestionManager.New("Trivia")
+trivia3:Add("This is a test", {"Kangaroo", "tst"})
+trivia3:Add("What does the Richter scale measure?", {"Earthquake intensity", "Wind Speed", "Temperature", "Tornado Strength"}, 2)
