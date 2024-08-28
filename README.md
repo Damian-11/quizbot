@@ -33,7 +33,7 @@ You will only be dealing with `categories` and `questions` while creating custom
 
 The script returns the CustomCategoryManager class, which can be used to create custom categories using the CustomCategoryManager.New() function.
 ```lua
-local CustomCategoryManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/main/quizbot.luau"))()
+local CustomCategoryManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()
 local spanish = CustomCategoryManager.New("Spanish") -- create a new category
 ```
 The `CustomCategoryManager.New("Category Name")` function will create a new category with the name you specifed. If the category already exists, it will simply add a new quiz to the existing category.
