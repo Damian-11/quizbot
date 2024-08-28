@@ -1390,6 +1390,7 @@ mainTab:CreateInput({
     Callback = function(value)
         selectedCategory = getCategoryName(value)
         if selectedCategory then
+            notify("Selected category", "The current category is "..selectedCategory)
             categoryLabel:Set("Selected category: "..selectedCategory)
         end
     end
