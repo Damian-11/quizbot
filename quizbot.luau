@@ -104,6 +104,11 @@ local function notify(title: string, text: string, buttonOptions: table?)
         Button2 = buttonOptions.Button2
     })
 end
+local function EscapePattern(pattern: string) -- escapse magic characters in pattern
+    local escapePattern = "[%(%)%.%%%+%-%*%?%[%]%^%$]"
+    return string.gsub(pattern, escapePattern, "%%%1")
+end
+
 local antiFilteringDone: boolean
 local importantMessageSent: boolean -- if a important message that needs to be resent if filtered has been sent recently
 local messageBeforeFilter: string
@@ -425,12 +430,14 @@ local function startChatListening(message: string, player: Player)
     if #currentQuestion.answers[currentQuestion.rightAnswerIndex] < minLenght then
         minLenght = #currentQuestion.answers[currentQuestion.rightAnswerIndex] -- if minlenght is higher the the lenght of the correct answer, decrease it
     end
+    local escapedMessage = EscapePattern(messageContent)
     if #messageContent >= minLenght then
         for _, v in ipairs(currentQuestion.answers) do
+        local escapedAnswer = EscapePattern(v)
             if v:upper() == messageContent then
                 matchAnswer = v
                 break
-            elseif (string.match(v:upper(), messageContent) and #string.match(v:upper(), messageContent) >= minLenght) or string.match(messageContent, v:upper()) then
+            elseif (string.match(v:upper(), escapedMessage) and #string.match(v:upper(), escapedMessage) >= minLenght) or string.match(messageContent, escapedAnswer:upper()) then
                 if matchAnswer then -- no more than 1 match
                     return
                 end
@@ -1055,8 +1062,7 @@ local  function IsCategoryEqual(categoryName: string, matchCategory: string, suf
     if categoryName == matchCategory then
         return true
     end
-    local escapePattern = "[%(%)%.%%%+%-%*%?%[%]%^%$]"
-    suffix = string.gsub(suffix, escapePattern, "%%%1")
+    suffix = EscapePattern(suffix)
     local pattern = "^"..categoryName..suffix
     return string.match(matchCategory, pattern) ~= nil
 end
