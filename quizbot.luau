@@ -516,6 +516,7 @@ local function processMessage(player: Player, message: string)
         if not importantMessageSent or not quizRunning then
             return
         end
+        message = string.gsub(message, "&amp;", "&") -- for some very strange reason, & gets picked up as &amp;? Therefore I have to replace it back. If anyone finds out why, please let me know
         if messageBeforeFilter == message or (answeredByAltMessage and string.find(message, answeredByAltMessage)) then -- if message before and after filtering are exactly the same, the message has not been filtered
             filtersInARow = 0
             antiFilteringDone = true
@@ -892,7 +893,7 @@ WWI:Add("What caused Great Britain to join World War I?", {"German troops marchi
 WWI:Add("What was the name of the alliance between Germany, Austria-Hungary and Italy?", {"Triple Alliance", "The Axis Powers", "The Triple Entente", "The League of Nations"}, 2)
 
 local luau = categoryManager.New("Luau")
-luau:Add("What is the keyword for defining a function in Luau?", {"function", "def", "func", "sub"})
+luau:Add("What is the keyword for defining a function in Luau?", {"function", "def", "local", "sub"})
 luau:Add("What is the syntax for creating a comment in Luau?", {"-- comment", "// comment", "# comment", "' comment"}, 2)
 luau:Add("What is the data type for storing multiple values in Luau?", {"table", "array", "list", "set"})
 luau:Add("How do you declare a table in Luau?", {"local table = {}", "local table = []", "local table = table.new()", "local table = ()"})
