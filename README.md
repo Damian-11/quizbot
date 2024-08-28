@@ -8,7 +8,7 @@ local myCategory = CustomCategoryManager.New("Category Name") -- create a new ca
 myCategory:Add("This is a test question?", {"Correct Answer", "Wrong Answer1", "Wrong Answer2", "Wrong Answer3"}) -- add a question
 myCategory:Add("What does the word 'Agua' mean in Spanish?", {"Water", "Milk", "Dog", "The number 5"}, 2) -- add a double point question
 
-Check out  for more information about adding custom questions
+Check out https://github.com/Damian-11/quizbot/blob/master/README.md#how-to-add-custom-categories-and-questions for more information about adding custom questions
 --]]
 ```
 # How to add custom categories (and questions)
