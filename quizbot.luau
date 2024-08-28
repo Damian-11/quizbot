@@ -718,7 +718,7 @@ science:Add("What is cooling lava called?", {"Igneous rocks", "Magma", "Fossils"
 
 local science2 = categoryManager.New("Science")
 science2:Add("What is faster, sound or light?", {"Light", "Sound", "They travel at the same speed", "They don't move"})
-science2:Add("What is the main cause of seasons on the Earth?", {"Earth's axis tilt in relation to the sun", "The speed that the Earth rotates around the sun", "Changes in amount of energy coming from the sun", "The distance between the Earth and the sun"}, 2)
+science2:Add("What is the primary cause of seasons on Earth?", {"The tilt of the Earth's axis as it orbits the Sun", "The speed that the Earth rotates around the sun", "Changes in the Sun's energy output", "The varying distance between the Earth and the Sun throughout the year"}, 2)
 science2:Add("Who developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo Galilei"})
 science2:Add("Which of these is a major concern about the overuse of antibiotics?", {"The bacteria will become antibiotic-resitant", "There will be an antibiotic shortage", "Antibiotics can cause secondary infections", "Antibiotics will get into the water system"})
 science2:Add("What is the powerhouse of the cell?", {"Mitochondria", "Nucleus", "Cytoplasm", "Nucleic membrane"}, 2)
@@ -747,7 +747,7 @@ foodAndDrink:Add("Which country does feta cheese come from?", {"Greece", "Switze
 local trivia = categoryManager.New("Trivia")
 trivia:Add("Which is NOT a Nobel Prize category?", {"Mathematics", "Physics", "Literature", "Chemistry"})
 trivia:Add("Which musical instrument has 47 strings and seven pedals?", {"Harp", "Piano", "Guitar", "Violin"})
-trivia:Add("Who painted the Mona Lisa?", {"Leonardo da Vinci", "Michelangelo", "Vincent van Gogh", "Pablo Picasso"})
+trivia:Add("Which paiter created the famous 'Mona Lisa' painting?", {"Leonardo da Vinci", "Michelangelo", "Vincent van Gogh", "Pablo Picasso"})
 trivia:Add("Which country is the only one to have a non-rectangular flag?", {"Nepal", "Switzerland", "Japan", "Qatar"})
 trivia:Add("'Bokmal' and 'Nynorsk' are the two official written forms of WHICH language?", {"Norwegian", "Italian", "Danish", "Spanish"}, 2)
 
@@ -1084,17 +1084,16 @@ local function UpdateCategory(categoryName: string) -- reindexes the specified c
 end
 
 ------------- Custom question OOP -------------
-getgenv().CustomQuestionManager = {}
-local CustomQuestionManager = getgenv().CustomQuestionManager
-CustomQuestionManager.__index = CustomQuestionManager
+local CustomCategoryManager = {}
+CustomCategoryManager.__index = CustomCategoryManager
 local categoryNames = {}
 
-function CustomQuestionManager.New(categoryName: string, difficulty: string?)
+function CustomCategoryManager.New(categoryName: string, difficulty: string?)
     if type(categoryName) == "string" then
         if not type(difficulty) == "string" then
             difficulty = "" -- if difficulty is not a string, use default (blank)
         end
-        local newCategory = setmetatable(categoryManager.New(categoryName, difficulty), CustomQuestionManager)
+        local newCategory = setmetatable(categoryManager.New(categoryName, difficulty), CustomCategoryManager)
         categoryNames[newCategory] = categoryName
         return newCategory
     else
@@ -1103,7 +1102,7 @@ function CustomQuestionManager.New(categoryName: string, difficulty: string?)
     notify("Can't add custom quiz", "See the output for more information")
 end
 
-function CustomQuestionManager:Add(quesitonText: string, options: table, value: number?)
+function CustomCategoryManager:Add(quesitonText: string, options: table, value: number?)
     if type(quesitonText) == "string" then
         if type(options) == "table" then
             if #options > 1 then
@@ -1166,32 +1165,6 @@ local function sendLeaderboard(type, message)
         end
     end
     task.wait(2.5)
-    --[[if array[1] and array[1][2] > 0 then
-        Chat(message..type.." leaderboard:")
-        local username = array[1][1]
-        local displayName = getDisplayNameByUsername(username)
-        local points = tostring(roundNumber(array[1][2], 1))
-        task.wait(2.5)
-        Chat("🥇 "..displayName.." (@"..username..") - "..points.." points")
-        UpdateSignText("🥇 "..displayName)
-        if array[2] and array[2][2] > 0 then
-            username = array[2][1]
-            displayName = getDisplayNameByUsername(username)
-            points = tostring(roundNumber(array[2][2], 1))
-            task.wait(2.5)
-            Chat("🥈 "..displayName.." (@"..username..") - "..points.." points")
-            UpdateSignText("🥈 "..displayName)
-            if array[3] and array[3][2] > 0 then
-                task.wait(2.5)
-                username = array[3][1]
-                displayName = getDisplayNameByUsername(username)
-                points = tostring(roundNumber(array[3][2], 1))
-                Chat("🥉 "..displayName.." (@"..username..") - "..points.." points")
-                UpdateSignText("🥉 "..displayName)
-                task.wait(2.5)
-            end
-        end
-    end]]
 end
 local leaderboardLabels = {
     CurrentQuizPoints = {},
@@ -1236,7 +1209,7 @@ for categoryName, category in categoryLookupTable do -- find how many categories
     end
 end
 local function choseAutoplayCategory()
-    local chosenCategory = categoryTable[math.random(#categoryTable)] --TODO: table doesnt clear properly
+    local chosenCategory = categoryTable[math.random(#categoryTable)]
     local chosenCategoryDifficulty = categoryLookupTable[chosenCategory][2]
     if (autoplayChosenCategories[chosenCategoryDifficulty] and table.find(autoplayChosenCategories[chosenCategoryDifficulty], chosenCategory)) or not table.find(autoPlayDifficulties, categoryLookupTable[chosenCategory][2]) then -- if category has been previously chosen, chose another category
         return choseAutoplayCategory()
@@ -1780,7 +1753,4 @@ settingsTab:CreateButton({
     end
 })
 
-----
-local trivia3 = CustomQuestionManager.New("Trivia")
-trivia3:Add("This is a test", {"Kangaroo", "tst"})
---trivia3:Add("What does the Richter scale measure?", {"Earthquake intensity", "Wind Speed", "Temperature", "Tornado Strength"}, 2)
+return CustomCategoryManager
