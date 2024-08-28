@@ -1051,22 +1051,36 @@ local function sendCategories()
     end
 end
 
-local categoryDropdown
-local function UpdateCategory(categoryName: string) -- reindexes the specified category
-    for i=1, #categoriesToSend do
-        if string.match(categoriesToSend[i], "^"..categoryName.."{"..#categoryName.."}") then -- remove all of the category's quizzes to prevent duplicates
-            table.remove(categoriesToSend, i)
+local  function IsCategoryEqual(categoryName: string, matchCategory: string, suffix: string): boolean -- true if the categories are the same with the modifies. (WWII-1, WWI) -> false (WWII-1, WWII) -> true
+    if categoryName == matchCategory then
+        return true
+    end
+    local escapePattern = "[%(%)%.%%%+%-%*%?%[%]%^%$]"
+    suffix = string.gsub(suffix, escapePattern, "%%%1")
+    local pattern = "^"..categoryName..suffix
+    return string.match(matchCategory, pattern) ~= nil
+end
+
+local function RemoveDuplicateCategories(targetTable: table, categoryName: string, suffix: string)
+    local tempTable = table.clone(targetTable) -- to prevent weird stuff from happening when the loop removes items from the table while it is actively running
+    for i=1, #targetTable do
+        if IsCategoryEqual(categoryName, targetTable[i], suffix) then -- remove all of the category's quizzes to prevent duplicates
+            table.remove(tempTable, table.find(tempTable, targetTable[i]))
         end
     end
+    return tempTable
+end
+
+local categoryDropdown
+local function UpdateCategory(categoryName: string) -- reindexes the specified category
+    categoriesToSend = RemoveDuplicateCategories(categoriesToSend, categoryName, " [")
     local difficulties = categories.categoryList[categoryName]
     table.insert(categoriesToSend, AddToSendCategoryTable(categoryName, difficulties))
     table.sort(categoriesToSend)
-    if table.find(categoryTable, categoryName) then
-        table.remove(categoryTable, table.find(categoryTable, categoryName))
-    end
+    categoryTable = RemoveDuplicateCategories(categoryTable, categoryName, "-")
     UpdateCategoryTable(categoryName, difficulties)
-    categoryDropdown:Set(categoryTable[#categoryTable])
     table.sort(categoryTable)
+    categoryDropdown:Refresh(categoryTable)
 end
 
 ------------- Custom question OOP -------------
@@ -1377,7 +1391,7 @@ end
 local library
 
 local success = pcall(function()
-    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/main/source.lua'))() -- Rayfield lib
+    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/dropdown-refresh/source.lua'))() -- Rayfield lib
 end)
 if not success then-- if the first libary is down for any reason, ask user to report it on discord
     notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
@@ -1769,4 +1783,4 @@ settingsTab:CreateButton({
 ----
 local trivia3 = CustomQuestionManager.New("Trivia")
 trivia3:Add("This is a test", {"Kangaroo", "tst"})
-trivia3:Add("What does the Richter scale measure?", {"Earthquake intensity", "Wind Speed", "Temperature", "Tornado Strength"}, 2)
+--trivia3:Add("What does the Richter scale measure?", {"Earthquake intensity", "Wind Speed", "Temperature", "Tornado Strength"}, 2)
