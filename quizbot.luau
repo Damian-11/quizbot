@@ -637,7 +637,7 @@ local function awaitAnswer(targetQuestion)
         task.delay(0.5, function() -- delayed to give time to the signtimecoroutine to stop chanong sign text
             UpdateSignText(targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
         end)
-        SendMessageWhenReady("✔️ | "..questionAnsweredBy.DisplayName.." answered correctly. Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true, "Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
+        SendMessageWhenReady("✔️ | "..questionAnsweredBy.DisplayName.." answered correctly. Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true, "Player answered correctly! Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
         questionAnsweredBy = nil
         awaitingAnswer = false
         table.clear(userCooldowns)
@@ -699,7 +699,7 @@ countriesEasy:Add("What country is this? 🇳🇴", {"Norway", "Sweden", "Denmar
 local countriesEasy2 = categoryManager.New("Guess the country", "easy")
 countriesEasy2:Add("What country is this? 🇫🇷", {"France", "England", "Netherlands", "Russia"})
 countriesEasy2:Add("What country is this? 🇬🇷", {"Greece", "Serbia", "Argentina", "Spain"})
-countriesEasy2:Add("What country is this? 🇦🇷", {"Argentina", "Honduras", "Chile", "Brazil"})
+countriesEasy2:Add("What country is this? 🇦🇷", {"Argentina", "Honduras", "Estonia", "Brazil"})
 countriesEasy2:Add("What country is this? 🇻🇳", {"Vietnam", "China", "Japan", "Bejing"})
 countriesEasy2:Add("What country is this? 🇷🇸", {"Serbia", "Bosnia", "Croatia", "Slovakia"}, 2)
 
@@ -726,9 +726,9 @@ science:Add("What is cooling lava called?", {"Igneous rocks", "Magma", "Fossils"
 
 local science2 = categoryManager.New("Science")
 science2:Add("What is faster, sound or light?", {"Light", "Sound", "They travel at the same speed", "They don't move"})
-science2:Add("What is the primary cause of seasons on Earth?", {"The tilt of the Earth's axis as it orbits the Sun", "The speed that the Earth rotates around the sun", "Changes in the Sun's energy output", "The varying distance between the Earth and the Sun throughout the year"}, 2)
-science2:Add("Who developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo Galilei"})
-science2:Add("Which of these is a major concern about the overuse of antibiotics?", {"The bacteria will become antibiotic-resitant", "There will be an antibiotic shortage", "Antibiotics can cause secondary infections", "Antibiotics will get into the water system"})
+science2:Add("Which of these is not one of Newton's laws of motion?", {"Objects at rest stay in motion", "Force equals mass times acceleration", "Every action has an equal and opposite reaction", "An object in motion stays in motion"})
+science2:Add("Who developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo"})
+science2:Add("Which of these is not a state of matter?", {"Energy", "Solid", "Liquid", "Gas"})
 science2:Add("What is the powerhouse of the cell?", {"Mitochondria", "Nucleus", "Cytoplasm", "Nucleic membrane"}, 2)
 
 local history = categoryManager.New("History")
@@ -755,7 +755,7 @@ foodAndDrink:Add("Which country does feta cheese come from?", {"Greece", "Switze
 local trivia = categoryManager.New("Trivia")
 trivia:Add("Which is NOT a Nobel Prize category?", {"Mathematics", "Physics", "Literature", "Chemistry"})
 trivia:Add("Which musical instrument has 47 strings and seven pedals?", {"Harp", "Piano", "Guitar", "Violin"})
-trivia:Add("Which paiter created the famous 'Mona Lisa' painting?", {"Leonardo da Vinci", "Michelangelo", "Vincent van Gogh", "Pablo Picasso"})
+trivia:Add("What is the capital city of Japan?", {"Tokyo", "Beijing", "Seoul", "Bangkok"})
 trivia:Add("Which country is the only one to have a non-rectangular flag?", {"Nepal", "Switzerland", "Japan", "Qatar"})
 trivia:Add("'Bokmal' and 'Nynorsk' are the two official written forms of WHICH language?", {"Norwegian", "Italian", "Danish", "Spanish"}, 2)
 
@@ -868,7 +868,7 @@ local minecraft = categoryManager.New("Minecraft")
 minecraft:Add("What is the name of the green creature that explodes?", {"Creeper", "Zombie", "Skeleton", "Slime"})
 minecraft:Add("Which tool is best for digging stone and bricks?", {"Pickaxe", "Shovel", "Axe", "Drill"})
 minecraft:Add("What is the name of the dimension where you fight the Ender Dragon?", {"The End", "The Nether", "The Overworld", "The Void"}, 2)
-minecraft:Add("What item do you need to tame a wolf?", {"Bone", "Apple", "Fish"})
+minecraft:Add("What resource do you need to trade with villagers?", {"Emerald", "Apple", "Gold", "Iron"})
 minecraft:Add("What block can you use to make a portal to the Nether?", {"Obsidian", "Netherrack", "Cobblestone", "Bedrock"})
 
 local chess = categoryManager.New("Chess")
@@ -965,9 +965,9 @@ chemistry:Add("What is the name of the organic compound that has the general for
 local biology = categoryManager.New("Biology")
 biology:Add("What is the name of the process by which plants make their own food?", {"Photosynthesis", "Respiration", "Transpiration", "Fermentation"})
 biology:Add("What is the smallest unit of life?", {"Cell", "Atom", "Molecule", "Organ"})
-biology:Add("What is the term for a group of cells that perform a specific function?", {"Tissue", "Organ", "System", "Organism"})
+biology:Add("What is the main function of red blood cells?", {"Oxygen transport", "Fighting infections", "Blood clotting", "Producing antibodies"})
 biology:Add("What are the four types of macromolecules found in living things?", {"Carbohydrates, proteins, lipids, and nucleic acids", "Glucose, amino acids, fatty acids, and nucleotides", "Starch, enzymes, fats, and DNA", "Sugars, peptides, oils, and RNA"}, 2)
-biology:Add("What is the name of the molecule that carries genetic information in most living organisms?", {"DNA", "RNA", "ATP", "ADP"})
+biology:Add("What is the name of the molecule that carries genetic information in most living organisms?", {"DNA", "Cell", "ATP", "ADP"})
 
 local sayings = categoryManager.New("Sayings and Idioms")
 sayings:Add("Which idiom means to reveal a secret?", {"Let the cat out of the bag", "Paint the town red", "Beat around the bush", "Bite the bullet"})
@@ -976,12 +976,19 @@ sayings:Add("Which idiom means to be in trouble?", {"In hot water", "On cloud ni
 sayings:Add("What does 'hold your horses' mean?", {"Be patient", "Ride horses", "Work hard", "Go faster"})
 sayings:Add("What does 'break a leg' mean?", {"Good luck", "Actually break a leg", "Run away", "Take a break"}, 2)
 
-local internetSlang = categoryManager.New("Internet Slang")
+local internetSlang = categoryManager.New("Internet Slang", "easy")
 internetSlang:Add("What does 'LOL' stand for?", {"Laugh Out Loud", "Lots Of Love", "Living On Land", "Look Out Left"})
 internetSlang:Add("What does 'FOMO' stand for?", {"Fear Of Missing Out", "Friends Of My Office", "Fond Of Moving On", "Full Of Many Options"})
 internetSlang:Add("What does 'IMO' stand for?", {"In My Opinion", "Internet Mail Order", "It's Monday Obviously", "I'm Moving Out"})
 internetSlang:Add("What is the meaning of 'SMH'?", {"Shaking My Head", "So Much Hate", "Send More Help", "Smashing My Head"})
 internetSlang:Add("What does 'IIRC' stand for?", {"If I Remember Correctly", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
+
+local internetSlang2 = categoryManager.New("Internet Slang", "medium")
+internetSlang2:Add("What does 'FTFY' mean?", {"Fixed That For You", "For The Following Year", "Forget That, Find Yourself", "Faster Than Fifty Yaks"})
+internetSlang2:Add("What is the meaning of 'AMA'?", {"Ask Me Anything", "Always Making Assumptions", "Another Missed Appointment", "Awesome Meme Alert"})
+internetSlang2:Add("What does 'YOLO' stand for?", {"You Only Live Once", "Your Own Life Obligations", "Yesterday's Old Leftover Onions", "Yelling Out Loud Often"})
+internetSlang2:Add("What does 'OMW' stand for?", {"On My Way", "Oh My Word", "Only Men Welcome", "Official Meme Website"})
+internetSlang2:Add("What is the meaning of 'ITT'?", {"In This Thread", "I'll Tell Them", "I Think That", "I Talked To"}, 2)
 
 local categoryTable = {}
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
