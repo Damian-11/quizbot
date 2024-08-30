@@ -113,6 +113,8 @@ local antiFilteringDone: boolean
 local importantMessageSent: boolean -- if a important message that needs to be resent if filtered has been sent recently
 local messageBeforeFilter: string
 local answeredByAltMessage: string -- alt message specially for the correct answer text
+local mainQuestionSent: boolean
+local messageFiltered: boolean -- set to false once main question gets asked successfully without being filtered
 function SendMessageWhenReady(message: string, important: boolean?, altMessage: string?) -- sends message so roblox won't rate limit it. if message is "important", script will send it again if it gets filtered/tagged first time. Altmessage is the message to send instead of original if it gets tagged
     if not quizRunning then
         return
@@ -124,6 +126,7 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
         importantMessageSent = true
         messageBeforeFilter = message
         answeredByAltMessage = altMessage
+        messageFiltered = false
         antiFilteringDone = false
     end
     if tick() - timeSinceLastMessage >= minMessageCooldown then
@@ -138,7 +141,7 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
         timeSinceLastMessage = tick()
     end
     if important then
-        while not antiFilteringDone and quizRunning do -- yields until the anti filter functions have done their job
+        while not antiFilteringDone and mainQuestionSent and quizRunning do -- yields until the anti filter functions have done their job
             task.wait()
         end
     end
@@ -219,20 +222,26 @@ function question:Ask()
     UpdateSignText(self.mainQuestion)
     currentQuestion = self
     questionPoints = self.value
+    mainQuestionSent = true
     SendMessageWhenReady("🎙️ | "..self.mainQuestion, true)
+    if messageFiltered then
+        task.wait(3)
+        Chat("➡️ | Repeated filtering detected. Skipping to the next question...")
+        return false
+    end
     if not quizRunning then
-        return
+        return true
     end
     task.wait(CalculateReadTime(self.mainQuestion))
     for i, v in ipairs(self.answers) do
         if questionAnsweredBy or not quizRunning then
-            return
+            return true
         end
         if i ~= 1 then
             task.wait(CalculateReadTime(v))
         end
         if questionAnsweredBy or not quizRunning then
-            return
+            return true
         end
         SendMessageWhenReady(letters[i]..")"..v, true) -- 1 = A) 2 = B) 3 = C) etc.
         answerOptionsSaid = i
@@ -513,17 +522,23 @@ local function processMessage(player: Player, message: string)
     if player ~= localPlayer then
         startChatListening(message, player)
     else
-        if not importantMessageSent or not quizRunning then
+        if not (importantMessageSent or mainQuestionSent or quizRunning) then
             return
         end
         message = string.gsub(message, "&amp;", "&") -- for some very strange reason, & gets picked up as &amp;? Therefore I have to replace it back. If anyone finds out why, please let me know
         if messageBeforeFilter == message or (answeredByAltMessage and string.find(message, answeredByAltMessage)) then -- if message before and after filtering are exactly the same, the message has not been filtered
             filtersInARow = 0
+            mainQuestionSent = false
             antiFilteringDone = true
             return
         elseif math.abs(#message - #messageBeforeFilter) > 8 or not string.find(message, "#") then -- if the lenght is diffrent from messageBeforeFilter the message is unrelated. Also give some space for diffrence to account for roblox weirdness with filtered lengh being diffrent from original lenght. Also checks for # to see if at least part of the message got tagged
             return
+        elseif mainQuestionSent and messageFiltered then -- if the main question got sent once and got filtered, don't try again
+            mainQuestionSent = false
+            antiFilteringDone = true
+            return
         end
+        messageFiltered = true
         filtersInARow += 1
         if filtersInARow == 1 then
             SendMessageWhenReady("🔁 | Waiting for filter to clear and resending filtered message...")
@@ -637,7 +652,7 @@ local function awaitAnswer(targetQuestion)
         task.delay(0.5, function() -- delayed to give time to the signtimecoroutine to stop chanong sign text
             UpdateSignText(targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
         end)
-        SendMessageWhenReady("✔️ | "..questionAnsweredBy.DisplayName.." answered correctly. Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true, "Player answered correctly! Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
+        SendMessageWhenReady("✔️ | "..questionAnsweredBy.DisplayName.." answered correctly. Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true, "[Player name filtered] answered correctly. Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
         questionAnsweredBy = nil
         awaitingAnswer = false
         table.clear(userCooldowns)
@@ -1251,7 +1266,11 @@ local function startQuiz(category: string)
         if not quizRunning then
             return
         end
-        v:Ask()
+        local questionAsked = v:Ask()
+        if questionAsked == false then -- if question didn't get asked because of the filter, skip to next
+            task.wait(5)
+            continue
+        end
         awaitAnswer(v)
         if not quizRunning then
             return
