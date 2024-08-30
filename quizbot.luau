@@ -141,7 +141,7 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
         timeSinceLastMessage = tick()
     end
     if important then
-        while not antiFilteringDone and mainQuestionSent and quizRunning do -- yields until the anti filter functions have done their job
+        while (not antiFilteringDone or mainQuestionSent) and quizRunning do -- yields until the anti filter functions have done their job
             task.wait()
         end
     end
@@ -272,9 +272,9 @@ local function SplitIntoMessages(itemTable: table, separtor: string, waitTime: n
     end
     for messageIndex, message in messages do
         local messageNumberString = string.format("(%d/%d)", messageIndex, #messages) -- [current message/amount of messages]
-        if messageIndex == 2 then
-            Chat("Resetting filter...") -- hacky solution that prevents the second message getting filtered
-            task.wait(4)
+        if messageIndex == 2 or messageIndex == 3 then
+            Chat("Waiting for filter...") -- hacky solution that prevents the second message getting filtered
+            task.wait(6)
         end
         Chat(message.." "..messageNumberString)
         task.wait(waitTime or CalculateReadTime(message) * 0.7) -- multiplied by 0.7 because full read time is too long
@@ -522,7 +522,7 @@ local function processMessage(player: Player, message: string)
     if player ~= localPlayer then
         startChatListening(message, player)
     else
-        if not (importantMessageSent or mainQuestionSent or quizRunning) then
+        if not (importantMessageSent or mainQuestionSent) or not quizRunning or not messageBeforeFilter then
             return
         end
         message = string.gsub(message, "&amp;", "&") -- for some very strange reason, & gets picked up as &amp;? Therefore I have to replace it back. If anyone finds out why, please let me know
@@ -764,7 +764,7 @@ local foodAndDrink = categoryManager.New("Food and drink")
 foodAndDrink:Add("Which country is the largest producer of coffee in the world?", {"Brazil", "Vietnam", "Colombia", "Ethiopia"})
 foodAndDrink:Add("What is the name of the Italian dessert made from layers of sponge cake soaked in coffee and mascarpone cheese?", {"Tiramisu", "Maritozzo", "Cannoli", "Zabaglione"})
 foodAndDrink:Add("What is the main ingredient of the Spanish dish, Paella?", {"Rice", "Bread", "Pasta", "Chicken"})
-foodAndDrink:Add("What is the name of the fermented milk drink that is popular in Central Asia & Eastern Europe?", {"Kefir", "Karin", "Lassi", "Yogurt"})
+foodAndDrink:Add("What is the name of the fermented milk drink that is popular in Central Asia & Eastern Europe?", {"Kefir", "Karin", "Kulmel", "Yogurt"})
 foodAndDrink:Add("Which country does feta cheese come from?", {"Greece", "Switzerland", "Spain", "France"}, 2)
 
 local trivia = categoryManager.New("Trivia")
@@ -831,7 +831,7 @@ gaming:Add("What video game did Mario, the Nintendo character, first appear in?"
 gaming:Add("What is the name of the virtual reality device developed by Valve?", {"Valve Index", "Oculus Rift", "Meta Quest", "Valve VR"})
 
 local gaming2 = categoryManager.New("Gaming")
-gaming2:Add("What is the name of the fictional city where the Grand Theft Auto III and IV games are set?", {"Liberty City", "Vice City", "San Andreas", "Los Santos"})
+gaming2:Add("Which company created the Mario franchise?", {"Nintendo", "Sony", "Microsoft", "Sega"})
 gaming2:Add("What is the name of the game developer who created Half-Life, Portal, and Counter-Strike?", {"Valve", "Blizzard", "Bethesda", "Rockstar"})
 gaming:Add("What is the name of the gaming console that was released by Nintendo in 2006 and featured motion controls?", {"Wii", "Switch", "GameCube", "DS"})
 gaming2:Add("What is the name of the platform game series that features a plumber who rescues a princess from a turtle-like villain?", {"Super Mario", "Sonic the Hedgehog", "Crash Bandicoot", "Rayman"})
@@ -926,7 +926,7 @@ memes:Add("Which meme features a dog sitting in a burning room?", {"This is fine
 memes:Add("What is the name of the frog character that is often associated with the phrase 'feels good man'?", {"Pepe", "Kermit", "Frogger", "Freddy"}, 2)
 memes:Add("What is the term for a meme that looks low-quality and pixelated?", {"Deep fried", "Dank", "Cringe", "Ironic"})
 memes:Add("Which animal is associated with the 'Doge' meme?", {"Shiba Inu", "Grumpy Cat", "Keyboard Cat", "Nyan Cat"})
-memes:Add("What is the name of the meme that features an elderly man with a forced smile?", {"Hide the Pain Harold", "Bad Luck Brian", "Grumpy Cat", "Success Kid"})
+memes:Add("What is the name of the meme featuring a man's head sticking out of a while toilet bowl?", {"Skibidi Toilet", "TF2 Guy", "Fanum Tax", "Smurf Cat"})
 
 local anarchy = categoryManager.New("Anarchy")
 anarchy:Add("What does the word 'anarchy' mean?", {"Absence of government and absolute freedom of the individual", "A state of disorder due to absence or nonrecognition of authority", "A political ideology that advocates self-governance and voluntary associations", "A system of social organization based on mutual aid and cooperation"})
@@ -1004,6 +1004,20 @@ internetSlang2:Add("What is the meaning of 'AMA'?", {"Ask Me Anything", "Always 
 internetSlang2:Add("What does 'YOLO' stand for?", {"You Only Live Once", "Your Own Life Obligations", "Yesterday's Old Leftover Onions", "Yelling Out Loud Often"})
 internetSlang2:Add("What does 'OMW' stand for?", {"On My Way", "Oh My Word", "Only Men Welcome", "Official Meme Website"})
 internetSlang2:Add("What is the meaning of 'ITT'?", {"In This Thread", "I'll Tell Them", "I Think That", "I Talked To"}, 2)
+
+local guessTheMovie = categoryManager.New("Guess the Movie")
+guessTheMovie:Add("Which movie features a young wizard attending the Hogwarts School?", {"Harry Potter and the Philosopher's Stone", "The Lord of the Rings", "The Chronicles of Narnia", "The Wizard of Oz"})
+guessTheMovie:Add("What movie tells the story of a clownfish searching for his son across the ocean?", {"Finding Nemo", "Shark Tale", "The Little Mermaid", "Free Billy"})
+guessTheMovie:Add("Which sci-fi film features blue-skinned aliens called the Na'vi?", {"Avatar", "Star Wars", "Alien", "District 9"})
+guessTheMovie:Add("In what movie does Tom Hanks play a man stranded on an island with only a volleyball for company?", {"Cast Away", "The Terminal", "Forrest Gump", "Saving Private Ryan"}, 2)
+guessTheMovie:Add("What movie tells the story of a group of toys that come to life when humans aren't around?", {"Toy Story", "The Lego Movie", "Small Soldiers", "Wreck-It Ralph"})
+
+local guessTheBook = categoryManager.New("Guess the Book")
+guessTheBook:Add("In which book does a young girl named Alice fall down a rabbit hole into a fantastical world?", {"Alice's Adventures in Wonderland", "The Wonderful Wizard of Oz", "Peter Pan", "The Secret Garden"})
+guessTheBook:Add("Which book tells the story of a character named Bilbo Baggins?", {"The Hobbit", "The Lord of the Rings", "The Silmarillion", "Eragon"})
+guessTheBook:Add("In which dystopian novel is the phrase 'Big Brother is watching you' prominent?", {"1984", "Brave New World", "Fahrenheit 451", "The Hunger Games"})
+guessTheBook:Add("Which book tells the story of a boy named Charlie who wins a golden ticket?", {"Charlie and the Chocolate Factory", "Charlie and the Giant Peach", "Wonka's Chocolate Factory", "The BFG"})
+guessTheBook:Add("Which book tells the story of a boy who never grows up and lives in Neverland?", {"Peter Pan", "The Wonderful Wizard of Oz", "Alice in Wonderland", "The Chronicles of Narnia"})
 
 local categoryTable = {}
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
@@ -1655,6 +1669,7 @@ settingsTab:CreateDropdown({
     CurrentOption = mode,
     Callback = function(option)
         mode = option
+        print(option)
         if option == "Quiz" then
             Chat("❓ | Quiz mode enabled")
         elseif option == "Kahoot" then
