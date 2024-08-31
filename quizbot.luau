@@ -284,6 +284,32 @@ local function SplitIntoMessages(itemTable: table, separtor: string, waitTime: n
     end
 end
 
+local antiAfkEnabled = false
+local function EnableAntiAfk() -- prevents Roblox kicking the player after 20 minutes of inactivity
+    -- credit to IY for antiafk code: https://github.com/EdgeIY/infiniteyield/tree/master
+    if antiAfkEnabled then
+        return
+    end
+    local GC = getconnections or get_signal_cons
+	if GC then
+		for i, v in pairs(GC(localPlayer.Idled)) do
+			if v["Disable"] then
+				v["Disable"](v)
+			elseif v["Disconnect"] then
+				v["Disconnect"](v)
+			end
+		end
+	else
+		local VirtualUser = cloneref(game:GetService("VirtualUser"))
+		localPlayer.Idled:Connect(function()
+			VirtualUser:CaptureController()
+			VirtualUser:ClickButton2(Vector2.new())
+		end)
+	end
+    antiAfkEnabled = true
+    notify("Anti-AFK enabled successfully", "You will not get kicked for being idle")
+end
+
 --- Category OOP ---
 local categoryManager = {}
 local categories = {}
@@ -1244,7 +1270,7 @@ end
 local autoplayChosenCategories = {} -- categories previously chosen by autoplay
 local numberOfCategoriesPerDifficulty = {}
 local autoPlayDifficulties = {} -- allowed difficulties by autoplay
-for categoryName, category in categoryLookupTable do -- find how many categories are in each difficulty group. Needed so autplay knows when it's out of categories
+for categoryName, category in categoryLookupTable do -- find how many categories are in each difficulty group. Needed so autoplay knows when it's out of categories
     if not numberOfCategoriesPerDifficulty[category[2]] then
         numberOfCategoriesPerDifficulty[category[2]] = 0
     else
@@ -1688,6 +1714,7 @@ settingsTab:CreateToggle({
     CurrentValue = settings.autoplay,
     Callback = function(value)
         settings.autoplay = value
+        EnableAntiAfk()
     end
 })
 local dropdownAutoplayFilter = difficultyOrder
