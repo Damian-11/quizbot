@@ -21,6 +21,7 @@ local quizCooldown = false
 local answerOptionsSaid = 0 -- how many answer options have been said (0 = none, 1 = a, 2 = b, etc.). Prevents users from spamming letters before they even know what the corresponding answer option is
 local minMessageCooldown = 2.3 -- how much you need to wait to send another message to avoid ratelimit
 local whiteListEnabled = false
+local ContextActionService = game:GetService("ContextActionService")
 
 local settings = {
     questionTimeout = 10,
@@ -1446,13 +1447,22 @@ if not success then-- if the first libary is down for any reason, ask user to re
     })
 end
 
+local uiHidden = false
+local function toggleUI(actionName, inputState, inputObject)
+    if inputState == Enum.UserInputState.Begin then
+        uiHidden = library:SetVisibility(uiHidden)
+    end
+end
+ContextActionService:BindAction("ToggleUI", toggleUI, true)
+ContextActionService:SetImage("ToggleUI", "rbxassetid://139565922434554")
+
 local window = library:CreateWindow({
 	Name = "Quizbot | Made by Damian11",
 	LoadingTitle = "Loading quizbot...",
 	LoadingSubtitle = "made by Damian11"
 })
 
-local mainTab = window:CreateTab("Main")
+local mainTab = window:CreateTab("Main", 84331098931857)
 mainTab:CreateSection("Category selection")
 local categoryLabel
 local selectedCategory
@@ -1508,7 +1518,7 @@ mainTab:CreateButton({
     end
 })
 
-local leaderboardTab = window:CreateTab("Leaderborad")
+local leaderboardTab = window:CreateTab("Leaderborad", 79320304472260)
 leaderboardTab:CreateSection("Server leaderboard (doesn't reset)")
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
@@ -1537,7 +1547,7 @@ leaderboardTab:CreateButton({
     Callback = pointManager.ResetAllPoints
 })
 
-local playerControlTab = window:CreateTab("Player controls")
+local playerControlTab = window:CreateTab("Player controls", 109295327609675)
 local targetPlayer
 local targetPlayerLabel
 playerControlTab:CreateSection("Select target")
@@ -1687,7 +1697,7 @@ playerControlTab:CreateButton({
     end
 })
 
-local settingsTab = window:CreateTab("Settings")
+local settingsTab = window:CreateTab("Settings", 88047201340245)
 settingsTab:CreateSection("Select mode")
 settingsTab:CreateDropdown({
     Name = "Mode",
@@ -1825,6 +1835,7 @@ settingsTab:CreateButton({
         currentQuestion = nil
         questionAnsweredBy = nil
         awaitingAnswer = false
+        ContextActionService:UnbindAction("ToggleUI")
         library:Destroy()
     end
 })
