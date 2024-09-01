@@ -775,7 +775,7 @@ science2:Add("What is the powerhouse of the cell?", {"Mitochondria", "Nucleus", 
 
 local history = categoryManager.New("History")
 history:Add("Which of these countries did the Soviet Union NEVER invade?", {"Sweden", "Afghanistan", "Finland", "Poland"})
-history:Add("What was the main cause of the French Revolution in 1789?", {"The social and economic inequality of the Third Estate", "The invasion of Napoleon Bonaparte", "The assassination of King Louis XVI", "The spread of the Black Death"})
+history:Add("What was the main cause of the French Revolution in 1789?", {"The social and economic inequality of the Third Estate", "The invasion of Napoleon Bonaparte", "The death of King Louis XVI", "The spread of the Black Death"})
 history:Add("Which of these historical events happened first?", {"The American Revolution", "The French Revolution", "The Industrial Revolution", "The Russian Revolution"}, 2)
 history:Add("What ancient civilization built the Machu Picchu complex?", {"Inca", "Aztec", "Maya", "Egypt"})
 history:Add("In what modern-day country was Karl Marx, the communist philosopher, born?", {"Germany", "France", "Russia", "China"}, 2)
@@ -931,7 +931,7 @@ local WWI = categoryManager.New("WWI")
 WWI:Add("Which country made the first declaration of war in WWI?", {"Austria-Hungary", "Serbia", "Russia", "Germany"})
 WWI:Add("What was the name of the British passenger ship that was sunk by a German submarine in 1915?", {"Lusitania", "Titanic", "Britannia", "Olympic"})
 WWI:Add("What was the nickname given to the type of warfare that involved digging trenches and fighting from them?", {"Trench warfare", "Guerrilla warfare", "Dirt warfare", "Siege warfare"})
-WWI:Add("What caused Great Britain to join World War I?", {"German troops marching through Belgium", "German bombing raids on London", "German use of illegal chemical weapons", "Germans sinking British civilian ships"})
+WWI:Add("What caused Great Britain to join World War I?", {"German troops marching through Belgium", "German bombing raids on London", "German use of illegal chemicals", "Germans sinking British civilian ships"})
 WWI:Add("What was the name of the alliance between Germany, Austria-Hungary and Italy?", {"Triple Alliance", "The Axis Powers", "The Triple Entente", "The League of Nations"}, 2)
 
 local luau = categoryManager.New("Luau")
@@ -1228,9 +1228,15 @@ local function sendLeaderboard(type, message)
             end
             local username = pointsArray[i][1]
             local displayName = getDisplayNameByUsername(username) or "" -- set to empty string in case user left during quiz
-            local points = tostring(roundNumber(pointsArray[i][2], 1))
+            local points = roundNumber(pointsArray[i][2], 1)
+            local pointWord
+            if points > 1 then
+                pointWord = "points"
+            else
+                pointWord = "point"
+            end
             task.wait(2.5)
-            Chat(medalEmojis[i]..displayName.." (@"..username..") - "..points.." points")
+            Chat(medalEmojis[i]..displayName.." (@"..username..") - "..points.." "..pointWord)
             UpdateSignText(medalEmojis[i]..displayName)
         end
     end
@@ -1246,8 +1252,14 @@ local function GetPointsAndUpdateLabels(type: string)
         if pointsArray[index] and pointsArray[index][2] > 0 then
             local username = pointsArray[index][1]
             local displayName = getDisplayNameByUsername(username)
-            local points = tostring(roundNumber(pointsArray[index][2], 1))
-            label:Set(medalEmojis[index]..displayName.." (@"..username..") - "..points.." points")
+            local points = roundNumber(pointsArray[index][2], 1)
+            local pointWord
+            if points > 1 then
+                pointWord = "points"
+            else
+                pointWord = "point"
+            end
+            label:Set(medalEmojis[index]..displayName.." (@"..username..") - "..points.." "..pointWord)
         end
     end
 end
@@ -1454,7 +1466,7 @@ local function toggleUI(actionName, inputState, inputObject)
     end
 end
 ContextActionService:BindAction("ToggleUI", toggleUI, true)
-ContextActionService:SetImage("ToggleUI", "rbxassetid://139565922434554")
+ContextActionService:SetImage("ToggleUI", "rbxassetid://100698995249426")
 
 local window = library:CreateWindow({
 	Name = "Quizbot | Made by Damian11",
@@ -1462,7 +1474,7 @@ local window = library:CreateWindow({
 	LoadingSubtitle = "made by Damian11"
 })
 
-local mainTab = window:CreateTab("Main", 84331098931857)
+local mainTab = window:CreateTab("Main", 81072774414061)
 mainTab:CreateSection("Category selection")
 local categoryLabel
 local selectedCategory
@@ -1518,7 +1530,7 @@ mainTab:CreateButton({
     end
 })
 
-local leaderboardTab = window:CreateTab("Leaderborad", 79320304472260)
+local leaderboardTab = window:CreateTab("Leaderborad", 118001929385447)
 leaderboardTab:CreateSection("Server leaderboard (doesn't reset)")
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
@@ -1547,7 +1559,7 @@ leaderboardTab:CreateButton({
     Callback = pointManager.ResetAllPoints
 })
 
-local playerControlTab = window:CreateTab("Player controls", 109295327609675)
+local playerControlTab = window:CreateTab("Player controls", 126813390527582)
 local targetPlayer
 local targetPlayerLabel
 playerControlTab:CreateSection("Select target")
@@ -1697,7 +1709,7 @@ playerControlTab:CreateButton({
     end
 })
 
-local settingsTab = window:CreateTab("Settings", 88047201340245)
+local settingsTab = window:CreateTab("Settings", 124411316797456)
 settingsTab:CreateSection("Select mode")
 settingsTab:CreateDropdown({
     Name = "Mode",
