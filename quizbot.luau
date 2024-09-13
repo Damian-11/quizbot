@@ -1021,7 +1021,7 @@ sayings:Add("What does 'break a leg' mean?", {"Good luck", "Actually break a leg
 local internetSlang = categoryManager.New("Internet Slang", "easy")
 internetSlang:Add("What does 'LOL' stand for?", {"Laugh Out Loud", "Lots Of Love", "Living On Land", "Look Out Left"})
 internetSlang:Add("What does 'FOMO' stand for?", {"Fear Of Missing Out", "Friends Of My Office", "Fond Of Moving On", "Full Of Many Options"})
-internetSlang:Add("What does 'IMO' stand for?", {"In My Opinion", "Internet Mail Order", "It's Monday Obviously", "I'm Moving Out"})
+internetSlang:Add("What does 'IMO' stand for?", {"In My Opinion", "Internet Mail Order", "It's Monday Obviously", "I Mean Okay"})
 internetSlang:Add("What is the meaning of 'SMH'?", {"Shaking My Head", "So Much Hate", "Send More Help", "Smashing My Head"})
 internetSlang:Add("What does 'IIRC' stand for?", {"If I Remember Correctly", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
 
@@ -1459,10 +1459,11 @@ if not success then-- if the first libary is down for any reason, ask user to re
     })
 end
 
-local uiHidden = false
+local uiVisible = true
 local function toggleUI(actionName, inputState, inputObject)
     if inputState == Enum.UserInputState.Begin then
-        uiHidden = library:SetVisibility(uiHidden)
+        library:SetVisibility(not uiVisible)
+        uiVisible = library:GetVisibility()
     end
 end
 ContextActionService:BindAction("ToggleUI", toggleUI, true)
