@@ -881,7 +881,7 @@ roblox:Add("Who won the RB Battles season 1 championship?", {"KreekCraft", "Tofu
 local roblox2 = categoryManager.New("Roblox")
 roblox2:Add("What is another name for the avatar shop?", {"Catalog", "Avatar Creator", "Avatar Editor"})
 roblox2:Add("What programming language do you need to use to create Roblox games?", {"Luau", "JavaScript", "Python", "PHP"}, 2)
-roblox2:Add("What is the name of the virtual reality headset that Roblox supports?", {"Oculus Rift", "Oculus Quest", "PlayStation VR", "Samsung Gear VR"})
+roblox2:Add("What is the name of Roblox's annual developer conference?", {"RDC", "Robloxcon", "Robloxx", "Blockfest"})
 roblox2:Add("What was the former name of Roblox premium?", {"Builders Club", "Roblox Plus", "Roblox Pro", "VIP Club"})
 roblox2:Add("What was the very first Roblox game to reach 1B+ visits?", {"MeepCity", "Arsenal", "Build a Boat For Treasure", "Adopt Me"}, 2)
 
@@ -986,7 +986,7 @@ mathCategory:Add("What is the value of x in the equation 2x + 5 = 13?", {"4", "3
 local mathHard = categoryManager.New("Math", "hard")
 mathHard:Add("What is the name of the theorem that states that a² + b² = c² for a right triangle?", {"Pythagorean theorem", "Fermat's last theorem", "Binomial theorem", "Euclid's theorem"})
 mathHard:Add("What is the derivative of e^x?", {"e^x", "x*e^(x-1)", "ln(x)", "1/e^x"})
-mathHard:Add("What is the name of the constant that is approximately equal to 2.71828?", {"Euler's number", "Golden ratio", " number", "Planck's constant"})
+mathHard:Add("What is the name of the constant that is approximately equal to 2.71828?", {"Euler's number", "The golden ratio", "PI", "Planck's constant"})
 mathHard:Add("What is the name of the sequence that starts with 1, 1, 2, 3, 5, 8, ...?", {"Fibonacci Sequence", "Arithmetic Sequence", "Geometric Sequence", "Harmonic Sequence"}, 2)
 mathHard:Add("What is the name of the branch of mathematics that deals with patterns and sequences?", {"Combinatorics", "Algebra", "Calculus", "Geometry"})
 
@@ -1282,7 +1282,7 @@ end
 
 local autoplayChosenCategories = {} -- categories previously chosen by autoplay
 local numberOfCategoriesPerDifficulty = {}
-local autoPlayDifficulties = {} -- allowed difficulties by autoplay
+local autoPlayDifficulties = difficultyOrder -- allowed difficulties by autoplay. Default is all difficulties
 for categoryName, category in categoryLookupTable do -- find how many categories are in each difficulty group. Needed so autoplay knows when it's out of categories
     if not numberOfCategoriesPerDifficulty[category[2]] then
         numberOfCategoriesPerDifficulty[category[2]] = 0
@@ -1717,11 +1717,10 @@ settingsTab:CreateDropdown({
     Options = {"Quiz", "Kahoot"},
     CurrentOption = mode,
     Callback = function(option)
-        mode = option
-        print(option)
-        if option == "Quiz" then
+        mode = option[1]
+        if mode == "Quiz" then
             Chat("❓ | Quiz mode enabled")
-        elseif option == "Kahoot" then
+        elseif mode == "Kahoot" then
             Chat("✉️ | Kahoot mode enabled")
         end
     end
