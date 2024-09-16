@@ -1450,7 +1450,7 @@ end
 local library
 
 local success = pcall(function()
-    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/dropdown-refresh/source.lua'))() -- Rayfield lib
+    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/main/source.lua'))() -- Rayfield lib
 end)
 if not success then-- if the first libary is down for any reason, ask user to report it on discord
     notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
@@ -1463,7 +1463,7 @@ local uiVisible = true
 local function toggleUI(actionName, inputState, inputObject)
     if inputState == Enum.UserInputState.Begin then
         library:SetVisibility(not uiVisible)
-        uiVisible = library:GetVisibility()
+        uiVisible = library:IsVisible()
     end
 end
 ContextActionService:BindAction("ToggleUI", toggleUI, true)
