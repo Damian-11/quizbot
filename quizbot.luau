@@ -1285,7 +1285,7 @@ local numberOfCategoriesPerDifficulty = {}
 local autoPlayDifficulties = difficultyOrder -- allowed difficulties by autoplay. Default is all difficulties
 for categoryName, category in categoryLookupTable do -- find how many categories are in each difficulty group. Needed so autoplay knows when it's out of categories
     if not numberOfCategoriesPerDifficulty[category[2]] then
-        numberOfCategoriesPerDifficulty[category[2]] = 0
+        numberOfCategoriesPerDifficulty[category[2]] = 1
     else
         numberOfCategoriesPerDifficulty[category[2]] += 1
     end
@@ -1364,8 +1364,7 @@ local function startQuiz(category: string)
             table.insert(autoplayChosenCategories[categoryLookupTable[category][2]], category)
         end
         Chat("🎲 | Picking next category...")
-        local chosenCategory = choseAutoplayCategory()
-        local autoPlayComplete = true --true if every category has been played
+        local autoPlayComplete = true -- true if every category has been played
         for _, difficulty in autoPlayDifficulties do -- do this each time in case the user changes the autoplay filter
             if autoplayChosenCategories[difficulty] and not #autoplayChosenCategories[difficulty] == numberOfCategoriesPerDifficulty[difficulty] then
                 autoPlayComplete = false
@@ -1378,6 +1377,7 @@ local function startQuiz(category: string)
         if autoPlayComplete then -- if every category has been chosen, clear the chosencategories table
             table.clear(autoplayChosenCategories)
         end
+        local chosenCategory = choseAutoplayCategory()
         task.wait(6)
         startQuiz(chosenCategory)
     end
@@ -1741,7 +1741,7 @@ settingsTab:CreateToggle({
         EnableAntiAfk()
     end
 })
-local dropdownAutoplayFilter = difficultyOrder
+local dropdownAutoplayFilter = table.clone(difficultyOrder)
 dropdownAutoplayFilter[1] = "Missing difficulty" -- replace "" with "Missing difficulty" to prevent confusion
 settingsTab:CreateDropdown({
     Name = "Autoplay filter (unselect all to disable filter)",
