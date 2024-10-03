@@ -1023,7 +1023,7 @@ internetSlang:Add("What does 'LOL' stand for?", {"Laugh Out Loud", "Lots Of Love
 internetSlang:Add("What does 'FOMO' stand for?", {"Fear Of Missing Out", "Friends Of My Office", "Fond Of Moving On", "Full Of Many Options"})
 internetSlang:Add("What does 'IMO' stand for?", {"In My Opinion", "Internet Mail Order", "It's Monday Obviously", "I Mean Okay"})
 internetSlang:Add("What is the meaning of 'SMH'?", {"Shaking My Head", "So Much Hate", "Send More Help", "Smashing My Head"})
-internetSlang:Add("What does 'IIRC' stand for?", {"If I Remember Correctly", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
+internetSlang:Add("What does 'IIRC' stand for?", {"If I Recall Correctly", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
 
 local internetSlang2 = categoryManager.New("Internet Slang", "medium")
 internetSlang2:Add("What does 'FTFY' mean?", {"Fixed That For You", "For The Following Year", "Forget That, Find Yourself", "Faster Than Fifty Yaks"})
