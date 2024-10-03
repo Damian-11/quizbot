@@ -817,7 +817,7 @@ guessTheLanguage:Add("नमस्ते", {"Hindi", "Indonesian", "Cantonese", 
 
 local capitals = categoryManager.New("Capitals", "easy")
 capitals:Add("What is the capital city of the USA?", {"Washington D.C.", "New York City", "Los Angeles", "Austin"})
-capitals:Add("What is the capital city of Finland?", {"Helsinki", "Stockholm", "Dublin", "Reykjavík"}, 2)
+capitals:Add("What is the capital city of Finland?", {"Helsinki", "Stockholm", "Dublin", "Reykjavik"}, 2)
 capitals:Add("What is the capital city of Poland?", {"Warsaw", "Kiev", "Moscow", "Krakow"})
 capitals:Add("What is the capital city of Germany?", {"Berlin", "Frankfurt", "Hamburg", "Dusseldorf"})
 capitals:Add("What is the capital city of Canada?", {"Ottawa", "Toronto", "Vancouver", "Montreal"})
@@ -1321,6 +1321,8 @@ local function startQuiz(category: string)
         end
         local questionAsked = v:Ask()
         if questionAsked == false then -- if question didn't get asked because of the filter, skip to next
+            currentQuestion = nil
+            questionAnsweredBy = nil
             task.wait(5)
             continue
         end
