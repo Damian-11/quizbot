@@ -555,6 +555,7 @@ local function processMessage(player: Player, message: string)
         message = string.gsub(message, "&amp;", "&") -- for some very strange reason, & gets picked up as &amp;? Therefore I have to replace it back. If anyone finds out why, please let me know
         if messageBeforeFilter == message or (answeredByAltMessage and string.find(message, answeredByAltMessage)) then -- if message before and after filtering are exactly the same, the message has not been filtered
             filtersInARow = 0
+            messageFiltered = false
             mainQuestionSent = false
             antiFilteringDone = true
             return
@@ -809,7 +810,7 @@ trivia2:Add("Which famous scientist developed the theory of relativity?", {"Albe
 trivia2:Add("In sport, what does the term PGA refer to?", {"Professional Golfers Association", "Par Golfing Average", "Playing Golf Average", "Part-Time Golfing Amaterurs"})
 
 local guessTheLanguage = categoryManager.New("Guess the language")
-guessTheLanguage:Add("Привет", {"Russian", "Norwegian", "Swedish", "Xhosa"})
+guessTheLanguage:Add("Je suis désolé", {"French", "Spanish", "Italian", "Portuguese"})
 guessTheLanguage:Add("בוקר טוב", {"Hebrew", "Tamil", "Lao", "Mandarin"})
 guessTheLanguage:Add("Guten Tag", {"German", "Tagalog", "Finnish", "Dutch"})
 guessTheLanguage:Add("こんにちは", {"Japanese", "Chinese", "Turkish", "Arabic"}, 2)
