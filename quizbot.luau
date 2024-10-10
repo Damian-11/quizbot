@@ -26,9 +26,9 @@ local ContextActionService = game:GetService("ContextActionService")
 local settings = {
     questionTimeout = 10,
     userCooldown = 5,
-    sendLeaderBoardAfterQuestions = 5,
+    sendLeaderBoardAfterQuestions = 0, -- only send quiz LB at end of quiz by default
     automaticLeaderboards = true,
-    automaticCurrentQuizLeaderboard = true,
+    automaticCurrentQuizLeaderboard = false,
     automaticServerQuizLeaderboard = true,
     signStatus = true,
     romanNumbers = true,
@@ -116,6 +116,7 @@ local messageBeforeFilter: string
 local answeredByAltMessage: string -- alt message specially for the correct answer text
 local mainQuestionSent: boolean
 local messageFiltered: boolean -- set to false once main question gets asked successfully without being filtered
+local lastMessageTime: number -- time at which the last message was picked up by the antifilering function
 function SendMessageWhenReady(message: string, important: boolean?, altMessage: string?) -- sends message so roblox won't rate limit it. if message is "important", script will send it again if it gets filtered/tagged first time. Altmessage is the message to send instead of original if it gets tagged
     if not quizRunning then
         return
@@ -142,8 +143,14 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
         timeSinceLastMessage = tick()
     end
     if important then
+        lastMessageTime = tick()
         while (not antiFilteringDone or mainQuestionSent) and quizRunning do -- yields until the anti filter functions have done their job
             task.wait()
+            if tick() - lastMessageTime > 4.5 then -- prevents the antifiltering functions yielding forever in case the message fails to send
+                notify("Error sending quiz message", "Chat rate limit reached. Avoid sending messages in the chat while a quiz is running")
+                messageFiltered = true -- the message not sending at all is equivalent to it being filtered
+                break
+            end
         end
     end
     importantMessageSent = false
@@ -566,6 +573,7 @@ local function processMessage(player: Player, message: string)
             antiFilteringDone = true
             return
         end
+        lastMessageTime = tick() + 5 -- add 5 to account for the antifiltering wait procedures
         messageFiltered = true
         filtersInARow += 1
         if filtersInARow == 1 then
@@ -1115,11 +1123,26 @@ for categoryName, difficulties in categories.categoryList do -- indexing categor
     table.insert(categoriesToSend, AddToSendCategoryTable(categoryName, difficulties))
 end
 table.sort(categoriesToSend)
+
+local firstTimeSendingCategories = true -- Roblox often filters the category table the first time you try to send it
+local currentlySendingCategoryList = false
 local function sendCategories()
-    if not quizRunning then
+    if not quizRunning and not currentlySendingCategoryList then
+        currentlySendingCategoryList = true
+        if firstTimeSendingCategories then
+            notify("Warning: possible filtering", "If the category list gets filtered the first time, try resending it")
+        end
         Chat("❓ | Quiz topics:")
         task.wait(3)
-        SplitIntoMessages(categoriesToSend, ", ", 5)
+        local waitTime = 5
+        if firstTimeSendingCategories then
+            waitTime = 10
+        end
+        SplitIntoMessages(categoriesToSend, ", ", waitTime)
+        firstTimeSendingCategories = false
+        currentlySendingCategoryList = false
+    elseif currentlySendingCategoryList then
+        notify("Category list is currently being sent", "Wait for it to finish sending before sending it again")
     end
 end
 
@@ -1307,6 +1330,9 @@ local function startQuiz(category: string)
         return
     elseif quizCooldown then
         notify("Cooldown active", "Try again in a few seconds")
+        return
+    elseif currentlySendingCategoryList then
+        notify("Category list is currently being sent", "Wait for it to finish sending before starting a quiz")
         return
     end
     quizRunning = true
@@ -1714,6 +1740,16 @@ playerControlTab:CreateButton({
 })
 
 local settingsTab = window:CreateTab("Settings", 124411316797456)
+settingsTab:CreateSection("Discord server")
+settingsTab:CreateLabel("Join our Discord server for support: discord.gg/wm384KFFMC")
+settingsTab:CreateButton({
+    Name = "Click this button to copy the invite link",
+    Callback = function()
+        setclipboard("https://discord.gg/wm384KFFMC")
+        notify("Successfully copied invite", "The invite link has been copied to your clipboard")
+    end
+})
+
 settingsTab:CreateSection("Select mode")
 settingsTab:CreateDropdown({
     Name = "Mode",
@@ -1786,6 +1822,9 @@ settingsTab:CreateInput({
     Callback = function(value)
         if value and tonumber(value) then
             settings.sendLeaderBoardAfterQuestions = tonumber(value)
+            if not settings.automaticCurrentQuizLeaderboard then
+                notify("Current quiz LB is disabled", "This settings doesn't take effect while the automatic sending of the current quiz LB is diabled")
+            end
         end
     end
 })
@@ -1797,12 +1836,14 @@ settingsTab:CreateToggle({
 })
 settingsTab:CreateToggle({
     Name = "Disable automatic sending of current quiz LB",
+    CurrentValue = not settings.automaticCurrentQuizLeaderboard,
     Callback = function(value)
         settings.automaticCurrentQuizLeaderboard = not value
     end
 })
 settingsTab:CreateToggle({
     Name = "Disable automatic sending of server LB",
+    CurrentValue = not settings.automaticServerQuizLeaderboard,
     Callback = function(value)
         settings.automaticServerQuizLeaderboard = not value
     end
