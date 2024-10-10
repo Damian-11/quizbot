@@ -1236,7 +1236,16 @@ local function sortUserPoints(type)
 end
 
 local medalEmojis = {"🥇 ", "🥈 ", "🥉 "}
-local function sendLeaderboard(type, message)
+local currentlySendingLeaderboard = false
+local function sendLeaderboard(type: string, message: string, quizIsRunning: boolean)
+    if quizIsRunning then
+        notify("Can't send LB while quiz is running", "Stop the current quiz or wait for it to end")
+        return
+    elseif currentlySendingLeaderboard then
+        notify("A leaderboard is currently being sent", "Wait for it to finish sending before sending a new one")
+        return
+    end
+    currentlySendingLeaderboard = true
     local pointsArray
     message = message or ""
     if type == "Current quiz" then
@@ -1265,6 +1274,7 @@ local function sendLeaderboard(type, message)
         end
     end
     task.wait(2.5)
+    currentlySendingLeaderboard = false
 end
 local leaderboardLabels = {
     CurrentQuizPoints = {},
@@ -1568,7 +1578,7 @@ table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥉 [E
 leaderboardTab:CreateButton({
     Name = "Send server leaderboard in chat",
     Callback = function()
-        sendLeaderboard("Server", "🏆 | ")
+        sendLeaderboard("Server", "🏆 | ", quizRunning)
     end
 })
 
@@ -1579,7 +1589,7 @@ table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("�
 leaderboardTab:CreateButton({
     Name = "Send current quiz leaderboard in chat",
     Callback = function()
-        sendLeaderboard("Current quiz", "📜 | ")
+        sendLeaderboard("Current quiz", "📜 | ", quizRunning)
     end
 })
 
