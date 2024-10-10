@@ -929,14 +929,14 @@ chess:Add("What is the name of the chess strategy that involves sacrificing a pi
 chess:Add("What is the name of the special move where a king and a rook swap places?", {"Castling", "Promotion", "Capture", "Fork"})
 chess:Add("Which piece is involved in 'en passant'?", {"Pawn", "Queen", "Bishop", "Knight"}, 2)
 
-local WWII = categoryManager.New("WWII")
+local WWII = categoryManager.New("WWII", "hard")
 WWII:Add("Which countries formed the Axis powers in WWII?", {"Germany, Italy and Japan", "France, Britain and Russia", "China, India and Australia", "Canada, Mexico and Brazil"})
 WWII:Add("Which country was attacked by Japan in 1941, prompting its entry into WWII?", {"USA", "China", "India", "Australia"})
 WWII:Add("Which two countries were the first to declare war on Germany?", {"Britain and France", "Italy and Greece", "Norway and Denmark", "Poland and Russia"})
 WWII:Add("What was the name of the operation that marked the Allied invasion of Normandy in 1944?", {"Operation Overlord", "Operation Barbarossa", "Operation Torch", "Operation Garden"}, 2)
 WWII:Add("What was the name of the code-breaking machine developed by the British to crack German ciphers?", {"Bombe", "Turing", "Lorenz", "Enigma"})
 
-local WWI = categoryManager.New("WWI")
+local WWI = categoryManager.New("WWI", "hard")
 WWI:Add("Which country made the first declaration of war in WWI?", {"Austria-Hungary", "Serbia", "Russia", "Germany"})
 WWI:Add("What was the name of the British passenger ship that was sunk by a German submarine in 1915?", {"Lusitania", "Titanic", "Britannia", "Olympic"})
 WWI:Add("What was the nickname given to the type of warfare that involved digging trenches and fighting from them?", {"Trench warfare", "Guerrilla warfare", "Dirt warfare", "Siege warfare"})
@@ -963,13 +963,6 @@ memes:Add("What is the name of the frog character that is often associated with 
 memes:Add("What is the term for a meme that looks low-quality and pixelated?", {"Deep fried", "Dank", "Cringe", "Ironic"})
 memes:Add("Which animal is associated with the 'Doge' meme?", {"Shiba Inu", "Grumpy Cat", "Keyboard Cat", "Nyan Cat"})
 memes:Add("What is the name of the meme featuring a man's head sticking out of a while toilet bowl?", {"Skibidi Toilet", "TF2 Guy", "Fanum Tax", "Smurf Cat"})
-
-local anarchy = categoryManager.New("Anarchy")
-anarchy:Add("What does the word 'anarchy' mean?", {"Absence of government and absolute freedom of the individual", "A state of disorder due to absence or nonrecognition of authority", "A political ideology that advocates self-governance and voluntary associations", "A system of social organization based on mutual aid and cooperation"})
-anarchy:Add("Which of these symbols is commonly associated with anarchy?", {"A circled A", "A hammer and sickle", "A peace sign", "A red star"})
-anarchy:Add("Which anarchist principle asserts that individuals should be free to pursue their interests and preferences, without being constrained by any fixed or imposed roles, norms, or identities?", {"Individualism", "Egoism", "Existentialism", "Nihilism"})
-anarchy:Add("Which of these contemporary movements is inspired by anarchist principles?", {"Occupy Wall Street", "Black Lives Matter", "Extinction Rebellion", "All of the above"}, 2)
-anarchy:Add("Which of these genres of music is often linked to anarchy?", {"Punk rock", "Classical music", "Country music", "Blues"})
 
 local anime = categoryManager.New("Anime")
 anime:Add("What is the name of the main character in Naruto?", {"Naruto Uzumaki", "Sasuke Uchiha", "Kakashi Hatake", "Itachi Uchiha"})
@@ -999,21 +992,21 @@ mathHard:Add("What is the name of the constant that is approximately equal to 2.
 mathHard:Add("What is the name of the sequence that starts with 1, 1, 2, 3, 5, 8, ...?", {"Fibonacci Sequence", "Arithmetic Sequence", "Geometric Sequence", "Harmonic Sequence"}, 2)
 mathHard:Add("What is the name of the branch of mathematics that deals with patterns and sequences?", {"Combinatorics", "Algebra", "Calculus", "Geometry"})
 
-local coldWar = categoryManager.New("Cold War")
-coldWar:Add("In 1946 Winston Churchill popularized what term used to describe Soviet relations with Western powers?", {"Iron curtain", "Mutually assured destruction", "Quagmire", "Special relationship"})
+local coldWar = categoryManager.New("Cold War", "hard")
+coldWar:Add("In 1946 Winston Churchill popularized what term used to describe Soviet relations with Western powers?", {"Iron curtain", "Mutually assured destruction", "Quagmire", "Danger to society"})
 coldWar:Add("Frequently cited as the counterpart to the CIA, what was the name of the Soviet intelligence agency?", {"KGB", "ICBM", "SALT", "DMZ"})
 coldWar:Add("Devised in 1959, the DEFCON system has five stages of military readiness. Which DEFCON rating is used when a nuclear attack is imminent or already underway?", {"DEFCON 1", "DEFCON 3", "DEFCON 5"})
 coldWar:Add("Although never fully leaving the organization, in 1966 what country withdrew its military from NATO and expelled NATO headquarters from its borders?", {"France", "United States", "Poland", "West Germany"})
 coldWar:Add("Often seen as the Soviet version of the United States’ Vietnam quagmire, the U.S.S.R.’s 10-year-long invasion of what country began in 1979?", {"Afghanistan", "Poland", "Czechoslovakia", "Ukraine"}, 2)
 
-local chemistry = categoryManager.New("Chemistry")
+local chemistry = categoryManager.New("Chemistry", "hard")
 chemistry:Add("What is the chemical formula of water?", {"H2O", "CO2", "O2", "2HO"})
 chemistry:Add("What is the name of the process that converts a solid into a gas without passing through a liquid state?", {"Sublimation", "Evaporation", "Condensation", "Deposition"})
 chemistry:Add("What is the name of the element with the symbol K?", {"Potassium", "Calcium", "Krypton", "Kalium"})
 chemistry:Add("What is the name of the process that separates a mixture of liquids based on their boiling points?", {"Distillation", "Filtration", "Crystallization", "Chromatography"})
 chemistry:Add("What is the name of the organic compound that has the general formula CnH2n+2?", {"Alkane", "Alkene", "Alkyne", "Ammonia"}, 2)
 
-local biology = categoryManager.New("Biology")
+local biology = categoryManager.New("Biology", "medium")
 biology:Add("What is the name of the process by which plants make their own food?", {"Photosynthesis", "Respiration", "Transpiration", "Fermentation"})
 biology:Add("What is the smallest unit of life?", {"Cell", "Atom", "Molecule", "Organ"})
 biology:Add("What is the main function of red blood cells?", {"Oxygen transport", "Fighting infections", "Blood clotting", "Producing antibodies"})
@@ -1054,6 +1047,13 @@ guessTheBook:Add("Which book tells the story of a character named Bilbo Baggins?
 guessTheBook:Add("In which dystopian novel is the phrase 'Big Brother is watching you' prominent?", {"1984", "Brave New World", "Fahrenheit 451", "The Hunger Games"})
 guessTheBook:Add("Which book tells the story of a boy named Charlie who wins a golden ticket?", {"Charlie and the Chocolate Factory", "Charlie and the Giant Peach", "Wonka's Chocolate Factory", "The BFG"})
 guessTheBook:Add("Which book tells the story of a boy who never grows up and lives in Neverland?", {"Peter Pan", "The Wonderful Wizard of Oz", "Alice in Wonderland", "The Chronicles of Narnia"})
+
+local music = categoryManager.New("Music")
+music:Add("Which band released the album 'The Dark Side of the Moon'?", {"Pink Floyd", "The Beatles", "Led Zeppelin", "The Rolling Stones"})
+music:Add("What do you call the words of a song?", {"Lyrics", "Melody", "Harmony", "Rhythm"})
+music:Add("Which of these is not a wind instrument?", {"Violin", "Flute", "Clarinet", "Saxophone"})
+music:Add("What is the national anthem of the United States called?", {"The Star Spangled Banner", "God Save the Queen", "La Marseillaise", "O Canada"})
+music:Add("Which of these is not a type of guitar?", {"Cello", "Acoustic", "Electric", "Bass"}, 2)
 
 local categoryTable = {}
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
@@ -1136,7 +1136,7 @@ local function sendCategories()
         task.wait(3)
         local waitTime = 5
         if firstTimeSendingCategories then
-            waitTime = 10
+            waitTime = 7
         end
         SplitIntoMessages(categoriesToSend, ", ", waitTime)
         firstTimeSendingCategories = false
