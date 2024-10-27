@@ -68,17 +68,17 @@ function intToRoman(num)
 end
 
 local oldChat: boolean
-if replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents') then
-    oldChat = true
-else
+if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
     oldChat = false
+else
+    oldChat = true
 end
 
 local function Chat(msg)
-    if replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents') then
-        replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
-    else
+    if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
         textChatService.TextChannels.RBXGeneral:SendAsync(msg)
+    else
+        replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
     end
 end
 
@@ -603,7 +603,6 @@ local function processMessage(player: Player, message: string)
     end
 end
 
-
 local chatConnection
 local joinConnection
 local playerChatConnections = {}
@@ -635,7 +634,6 @@ else
         processMessage(player, message)
     end)
 end
-
 
 local function awaitAnswer(targetQuestion)
     if not quizRunning then
@@ -1499,7 +1497,7 @@ if not success then-- if the first libary is down for any reason, ask user to re
 end
 
 local uiVisible = true
-local function toggleUI(actionName, inputState, inputObject)
+local function toggleUI(_actionName, inputState, _inputObject)
     if inputState == Enum.UserInputState.Begin then
         library:SetVisibility(not uiVisible)
         uiVisible = library:IsVisible()
@@ -1751,7 +1749,7 @@ playerControlTab:CreateButton({
 
 local settingsTab = window:CreateTab("Settings", 124411316797456)
 settingsTab:CreateSection("Discord server")
-settingsTab:CreateLabel("Join our Discord server for support: discord.gg/wm384KFFMC")
+settingsTab:CreateLabel("Join my Discord server for support: discord.gg/wm384KFFMC")
 settingsTab:CreateButton({
     Name = "Click this button to copy the invite link",
     Callback = function()
@@ -1889,8 +1887,8 @@ settingsTab:CreateButton({
     Name = "Destory UI and disable script",
     Callback = function()
         if oldChat then
+            joinConnection:Disconnect()
             for _, connection in playerChatConnections do
-                joinConnection:Disconnect()
                 connection:Disconnect()
             end
         else
