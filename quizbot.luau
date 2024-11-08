@@ -213,9 +213,9 @@ function question.New(quesitonText: string, options: table, value: number)
     return newQuestion
 end
 
-function question:Ask()
+function question:Ask(): boolean
     if not quizRunning then
-        return
+        return false
     end
     answerOptionsSaid = 0
     local rightAnswerBeforeShuffle = self.answers[self.rightAnswerIndex]
@@ -256,7 +256,7 @@ function question:Ask()
     end
 end
 
-local function SplitIntoMessages(itemTable: table, separtor: string, waitTime: number?) -- split table into multiple messages to prevent roblox cutting down the message
+local function SplitIntoMessages(itemTable: { string }, separtor: string, waitTime: number?) -- split table into multiple messages to prevent roblox cutting down the message
     local tempItemList = {}
     local messages = {}
     local currentLength = 0
@@ -647,11 +647,11 @@ local function awaitAnswer(targetQuestion)
         end
         task.wait(settings.questionTimeout)
         UpdateSignText(targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
-        SendMessageWhenReady("⏰ | Time is out! Correct answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true)
         timeIsOut = true
         currentQuestion = nil
         questionAnsweredBy = nil
         awaitingAnswer = false
+        SendMessageWhenReady("⏰ | Time is out! Correct answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true)
     end
     local function SignTime()
         for timeLeft = settings.questionTimeout, 1, -1 do
@@ -868,7 +868,7 @@ local gaming2 = categoryManager.New("Gaming")
 gaming2:Add("Which company created the Mario franchise?", {"Nintendo", "Sony", "Microsoft", "Sega"})
 gaming2:Add("What is the name of the game developer who created Half-Life, Portal, and Counter-Strike?", {"Valve", "Blizzard", "Bethesda", "Rockstar"})
 gaming:Add("What is the name of the gaming console that was released by Nintendo in 2006 and featured motion controls?", {"Wii", "Switch", "GameCube", "DS"})
-gaming2:Add("What is the name of the platform game series that features a plumber who rescues a princess from a turtle-like villain?", {"Super Mario", "Sonic the Hedgehog", "Crash Bandicoot", "Rayman"})
+gaming2:Add("What is the name of the platform game series that features a plumber who rescues a princess from a turtle-like villain?", {"Super Mario", "Sonic the Hedgehog", "Crash Bandicoot", "Cuphead"})
 gaming2:Add("How many standalone Grand Theft Auto titles have been released?", {"7", "5", "8", "10"}, 2)
 
 local movies = categoryManager.New("Movies")
@@ -1128,7 +1128,7 @@ local function sendCategories()
     if not quizRunning and not currentlySendingCategoryList then
         currentlySendingCategoryList = true
         if firstTimeSendingCategories then
-            notify("Warning: possible filtering", "If the category list gets filtered the first time, try resending it")
+            notify("Warning: possible filtering", "If the category list gets filtered the first time, try resending it after running a quiz")
         end
         Chat("❓ | Quiz topics:")
         task.wait(3)
@@ -1203,16 +1203,16 @@ function CustomCategoryManager:Add(quesitonText: string, options: table, value: 
                     UpdateCategory(categoryNames[self])
                     return
                 else
-                    print("Custom quiz error | question value needs to be a number or nil")
+                    print("Custom quiz error | [" .. quesitonText .. "] question value needs to be a number or nil")
                 end
             else
-                print("Custom quiz error | options table need to have more than one option")
+                print("Custom quiz error | [" .. quesitonText .. "] options table need to have more than one option")
             end
         else
-            print("Custom quiz error | options is not a table")
+            print("Custom quiz error | [" .. quesitonText .. "] options is not a table")
         end
     else
-        print("Custom quiz error | quesitonText is not a string")
+        print("Custom quiz error | [" .. quesitonText .. "] quesitonText is not a string")
     end
     notify("Can't add custom question", "See the output for more information")
 end
@@ -1509,7 +1509,8 @@ ContextActionService:SetImage("ToggleUI", "rbxassetid://100698995249426")
 local window = library:CreateWindow({
 	Name = "Quizbot | Made by Damian11",
 	LoadingTitle = "Loading quizbot...",
-	LoadingSubtitle = "made by Damian11"
+	LoadingSubtitle = "made by Damian11",
+    DisableRayfieldPrompts = true,
 })
 
 local mainTab = window:CreateTab("Main", 81072774414061)
@@ -1670,7 +1671,7 @@ playerControlTab:CreateButton({
     end
 })
 
-playerControlTab:CreateSection("Access control")
+playerControlTab:CreateSection("Block")
 playerControlTab:CreateButton({
     Name = "Block from participating",
     Callback = function()
@@ -1703,7 +1704,7 @@ playerControlTab:CreateButton({
     end
 })
 
-playerControlTab:CreateSection("Whitelist and blacklist")
+playerControlTab:CreateSection("Whitelist")
 playerControlTab:CreateToggle({
     Name = "Enable whitelist",
     CurrentValue = whiteListEnabled,
