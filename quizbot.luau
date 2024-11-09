@@ -1023,7 +1023,7 @@ internetSlang:Add("What does 'LOL' stand for?", {"Laugh Out Loud", "Lots Of Love
 internetSlang:Add("What does 'FOMO' stand for?", {"Fear Of Missing Out", "Friends Of My Office", "Fond Of Moving On", "Full Of Many Options"})
 internetSlang:Add("What does 'IMO' stand for?", {"In My Opinion", "Internet Mail Order", "It's Monday Obviously", "I Mean Okay"})
 internetSlang:Add("What is the meaning of 'SMH'?", {"Shaking My Head", "So Much Hate", "Send More Help", "Smashing My Head"})
-internetSlang:Add("What does 'IIRC' stand for?", {"If I Recall Correctly", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
+internetSlang:Add("What does 'IIRC' stand for?", {"If I Recall Correctly / If I Remember Correctly", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
 
 local internetSlang2 = categoryManager.New("Internet Slang", "medium")
 internetSlang2:Add("What does 'FTFY' mean?", {"Fixed That For You", "For The Following Year", "Forget That, Find Yourself", "Faster Than Fifty Yaks"})
@@ -1418,8 +1418,19 @@ local function startQuiz(category: string)
     end
 end
 
-local quizModeRules = {"Each question has one right answer and one to three wrong answers.", "If you answer correctly, you will earn one point (or two points if the question is a double point question).", "If you answer incorrectly, you will have to wait "..tostring(settings.userCooldown).." seconds before you can submit another answer."}
-local kahootModeRules = {"Each question has one right answer and one to three wrong answers.", "You can only submit ONE answer per round.", "The first answer you submit is your final answer, and it can not be changed.", "You have "..tostring(settings.questionTimeout).." seconds to answer the question after all the options have been said.", "Every second after all the options have been said, the points you will gain for answering correctly decrease.", "In other words, the quicker you answer, the more points you will gain.", "Additionally, the first person who submits a correct answer gets 1.5x points."}
+local quizModeRules = {
+    "Each question has one right answer and one to three wrong answers.",
+    "If you answer correctly, you will earn one point (or two points if the question is a double point question).",
+    "If you answer incorrectly, you will have to wait "..tostring(settings.userCooldown).." seconds before you can submit another answer.",
+}
+local kahootModeRules = {
+    "Each question has one right answer and one to three wrong answers.",
+    "You can only submit ONE answer per round.", "The first answer you submit is your final answer, and it can not be changed.",
+    "You have "..tostring(settings.questionTimeout).." seconds to answer the question after all the options have been said.",
+    "Every second after all the options have been said, the points you will gain for answering correctly decrease.",
+    "In other words, the quicker you answer, the more points you will gain.",
+    "Additionally, the first person who submits a correct answer gets 1.5x points.",
+}
 local function sendRules()
     if mode == "Quiz" then
         Chat("📜 | Quiz mode rules:")
@@ -1487,7 +1498,7 @@ end
 local library
 
 local success = pcall(function()
-    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/main/source.lua'))() -- Rayfield lib
+    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/stable/source.lua'))() -- Rayfield lib
 end)
 if not success then-- if the first libary is down for any reason, ask user to report it on discord
     notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
