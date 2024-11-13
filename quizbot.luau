@@ -22,6 +22,7 @@ local answerOptionsSaid = 0 -- how many answer options have been said (0 = none,
 local minMessageCooldown = 2.3 -- how much you need to wait to send another message to avoid ratelimit
 local whiteListEnabled = false
 local ContextActionService = game:GetService("ContextActionService")
+local UserInputService = game:GetService("UserInputService")
 
 local settings = {
     questionTimeout = 10,
@@ -1495,16 +1496,24 @@ local function getCategoryName(name: string) -- detects category from begging of
     end
 end
 ---------- UI ----------
-local library
+local library, window
 
-local success = pcall(function()
+local success, errorMessage = pcall(function()
     library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/stable/source.lua'))() -- Rayfield lib
+    window = library:CreateWindow({
+        Name = "Quizbot | Made by Damian11 AKA Quizzer",
+        LoadingTitle = "Loading quizbot...",
+        LoadingSubtitle = "made by Damian11 AKA Quizzer",
+        DisableRayfieldPrompts = true,
+    })
 end)
-if not success then-- if the first libary is down for any reason, ask user to report it on discord
+if not success then-- if the libary is down for any reason, ask user to report it on discord
     notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
         Callback = setclipboard("https://discord.gg/wm384KFFMC"),
         Button1 = "Copy invite link"
     })
+    warn("Quizbot error [UI LIB] | " .. errorMessage)
+    return -- stops the script
 end
 
 local uiVisible = true
@@ -1514,15 +1523,12 @@ local function toggleUI(_actionName, inputState, _inputObject)
         uiVisible = library:IsVisible()
     end
 end
-ContextActionService:BindAction("ToggleUI", toggleUI, true)
-ContextActionService:SetImage("ToggleUI", "rbxassetid://100698995249426")
 
-local window = library:CreateWindow({
-	Name = "Quizbot | Made by Damian11",
-	LoadingTitle = "Loading quizbot...",
-	LoadingSubtitle = "made by Damian11",
-    DisableRayfieldPrompts = true,
-})
+-- remember that laptops with touch screens exist
+if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+    ContextActionService:BindAction("ToggleUI", toggleUI, true)
+    ContextActionService:SetImage("ToggleUI", "rbxassetid://100698995249426")
+end
 
 local mainTab = window:CreateTab("Main", 81072774414061)
 mainTab:CreateSection("Category selection")
