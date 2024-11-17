@@ -134,10 +134,10 @@ end
 -- check if running latest version from GitHub
 local LATEST_VERSION_URL = "https://raw.githubusercontent.com/Damian-11/quizbot/master/version_number.luau"
 local success, LATEST_VERSION: string = pcall(function()
-    loadstring(game:HttpGet(LATEST_VERSION_URL)) -- this returns a string, such as "2.5.7"
+    return loadstring(game:HttpGet(LATEST_VERSION_URL))() -- this returns a string, such as "2.5.7"
 end)
 
-if success and VERSION ~= LATEST_VERSION then
+if success and LATEST_VERSION and VERSION ~= LATEST_VERSION then
     if not getDataFileValue("disableVersionAlert") then -- true if user has presses "Don't show again" before
         notify(
             "Outdated quizbot version",
