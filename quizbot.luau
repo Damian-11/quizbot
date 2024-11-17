@@ -1,4 +1,4 @@
-local VERSION = "2.0.0"
+local VERSION = "2.0.1"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -133,7 +133,7 @@ end
 
 -- check if running latest version from GitHub
 local LATEST_VERSION_URL = "https://raw.githubusercontent.com/Damian-11/quizbot/master/version_number.luau"
-local LATEST_VERSION: string = pcall(function()
+local success, LATEST_VERSION: string = pcall(function()
     loadstring(game:HttpGet(LATEST_VERSION_URL)) -- this returns a string, such as "2.5.7"
 end)
 
