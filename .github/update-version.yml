@@ -1,0 +1,39 @@
+name: Update Version Number
+
+on:
+  push:
+    paths:
+      - 'quizbot.luau'
+  pull_request:
+    paths:
+      - 'quizbot.luau'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+  steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+        - name: Extract version and update file
+          run: |
+            # Extract version number from first line of quizbot.luau
+            VERSION=$(head -n 1 quizbot.luau | grep -o '"[^"]*"' | tail -1 | tr -d '"')
+            
+            # Create or update version_number.luau
+            echo "return \"$VERSION\"" > version_number.luau
+            
+            # Check if there are changes to commit
+            if git diff --quiet version_number.luau; then
+              echo "No changes to version number"
+              exit 0
+            fi
+        - name: Commit changes
+          run: |
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add version_number.luau
+            git commit -m "Update version number to $VERSION"
+            git push
