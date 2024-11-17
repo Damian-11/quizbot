@@ -1,8 +1,11 @@
+local VERSION = "2.0.0"
+
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
 local currentQuestion
 local questionAnsweredBy
 local quizRunning = false
+local HttpService = game:GetService("HttpService")
 local players = game:GetService("Players")
 local localPlayer = players.LocalPlayer
 local blockedPlayers = {}
@@ -15,7 +18,7 @@ local questionPoints = 1
 local timeSinceLastMessage = tick()
 local placeId = game.PlaceId
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local starterGui = game:GetService("StarterGui")
+local StarterGui = game:GetService("StarterGui")
 local textChatService = game:GetService("TextChatService")
 local quizCooldown = false
 local answerOptionsSaid = 0 -- how many answer options have been said (0 = none, 1 = a, 2 = b, etc.). Prevents users from spamming letters before they even know what the corresponding answer option is
@@ -76,7 +79,7 @@ else
 end
 
 local function Chat(msg)
-    if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+    if not oldChat then
         textChatService.TextChannels.RBXGeneral:SendAsync(msg)
     else
         replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
@@ -96,17 +99,67 @@ local function roundNumber(num, numDecimalPlaces)
     return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 end
 
-local function notify(title: string, text: string, buttonOptions: table?)
-    buttonOptions = buttonOptions or {}
-    starterGui:SetCore("SendNotification", {
+-- callback value of configTable needs to be a bindable function
+local notifyBindable = Instance.new("BindableFunction")
+local function notify(title: string, text: string, configTable: { any }?, duration: number?)
+    configTable = configTable or {}
+    StarterGui:SetCore("SendNotification", {
         Title = title,
         Text = text,
-        Callback = buttonOptions.Callback,
-        Button1 = buttonOptions.Button1,
-        Button2 = buttonOptions.Button2
+        Callback = notifyBindable,
+        Button1 = configTable.Button1,
+        Button2 = configTable.Button2,
+        Duration = duration
     })
+    if configTable.Callback then
+        notifyBindable.OnInvoke = configTable.Callback
+    end
 end
-local function EscapePattern(pattern: string) -- escapse magic characters in pattern
+
+local DATA_FILENAME = "quizbot_data.json"
+type dataValueType = string | number | boolean
+local data = {} :: {[string]: dataValueType}
+if isfile(DATA_FILENAME) then
+    data = HttpService:JSONDecode(readfile(DATA_FILENAME))
+end
+
+local function writeToDataFile(key: string, value: dataValueType)
+    data[key] = value
+    writefile(DATA_FILENAME, HttpService:JSONEncode(data))
+end
+local function getDataFileValue(key: string): dataValueType?
+    return data[key]
+end
+
+-- check if running latest version from GitHub
+local LATEST_VERSION_URL = "https://raw.githubusercontent.com/Damian-11/quizbot/master/version_number.luau"
+local LATEST_VERSION: string = pcall(function()
+    loadstring(game:HttpGet(LATEST_VERSION_URL)) -- this returns a string, such as "2.5.7"
+end)
+
+if LATEST_VERSION and VERSION ~= LATEST_VERSION then
+    if not getDataFileValue("disableVersionAlert") then -- true if user has presses "Don't show again" before
+        notify(
+            "Outdated quizbot version",
+            "You are running an outdated version of quizbot. Click the button below to copy the latest version of this script",
+            {
+                Callback = function(buttonText: string)
+                    if buttonText == "Copy latest version" then
+                        setclipboard('loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()')
+                        notify("Script copied", "The latest version of quizbot has been copied to your clipboard")
+                    else
+                        writeToDataFile("disableVersionAlert", true)
+                    end
+                end,
+                Button1 = "Copy latest version",
+                Button2 = "Don't show again",
+            },
+            10
+        )
+    end
+end
+
+local function EscapePattern(pattern: string) -- escapes magic characters in pattern
     local escapePattern = "[%(%)%.%%%+%-%*%?%[%]%^%$]"
     return string.gsub(pattern, escapePattern, "%%%1")
 end
@@ -329,20 +382,20 @@ categoryManager.__index = categoryManager
 --[[Category table reference:
 categories = {
     categoryList = {
-        categoryName = {
+        [categoryName] = {
             easy = {{quiz1Questions}, {quiz2Questions}},
             medium = {...},
             ...
         },
-        categoryName2 = {
+        [categoryName2] = {
             easy = {{quiz1Questions}, {quiz2Questions}},
             medium = {...},
             ...
         }
     }
     numberOfDifficulties = {
-        categoryName = 2
-        categoryName2 = 3
+        [categoryName] = 2
+        [categoryName2] = 3
         ...
     }
 }
@@ -560,7 +613,7 @@ local function processMessage(player: Player, message: string)
         if not (importantMessageSent or mainQuestionSent) or not quizRunning or not messageBeforeFilter then
             return
         end
-        message = string.gsub(message, "&amp;", "&") -- for some very strange reason, & gets picked up as &amp;? Therefore I have to replace it back. If anyone finds out why, please let me know
+        message = string.gsub(message, "&amp;", "&") -- & gets picked up as &amp; Needs to be corrected back to &
         if messageBeforeFilter == message or (answeredByAltMessage and string.find(message, answeredByAltMessage)) then -- if message before and after filtering are exactly the same, the message has not been filtered
             filtersInARow = 0
             messageFiltered = false
@@ -1238,7 +1291,7 @@ local medalEmojis = {"🥇 ", "🥈 ", "🥉 "}
 local currentlySendingLeaderboard = false
 local function sendLeaderboard(type: string, message: string, quizIsRunning: boolean)
     if quizIsRunning then
-        notify("Can't send LB while quiz is running", "Stop the current quiz or wait for it to end")
+        notify("Can't send LB", "Can't send LB while quiz is running. Stop the current quiz or wait for it to end")
         return
     elseif currentlySendingLeaderboard then
         notify("A leaderboard is currently being sent", "Wait for it to finish sending before sending a new one")
@@ -1507,7 +1560,7 @@ local success, errorMessage = pcall(function()
         DisableRayfieldPrompts = true,
     })
 end)
-if not success then-- if the libary is down for any reason, ask user to report it on discord
+if not success then -- if the libary is down for any reason, ask user to report it on discord
     notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
         Callback = setclipboard("https://discord.gg/wm384KFFMC"),
         Button1 = "Copy invite link"
