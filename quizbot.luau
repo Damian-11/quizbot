@@ -137,7 +137,7 @@ local success, LATEST_VERSION: string = pcall(function()
     loadstring(game:HttpGet(LATEST_VERSION_URL)) -- this returns a string, such as "2.5.7"
 end)
 
-if LATEST_VERSION and VERSION ~= LATEST_VERSION then
+if success and VERSION ~= LATEST_VERSION then
     if not getDataFileValue("disableVersionAlert") then -- true if user has presses "Don't show again" before
         notify(
             "Outdated quizbot version",
@@ -255,7 +255,7 @@ end
 local question = {}
 question.__index = question
 
-function question.New(quesitonText: string, options: table, value: number)
+function question.New(quesitonText: string, options: { string }, value: number)
     local newQuestion = {}
     newQuestion.mainQuestion = quesitonText
     newQuestion.answers = options
@@ -422,7 +422,7 @@ function categoryManager.New(categoryName: string, difficulty: string?)
     return newCategory
 end
 
-function categoryManager:Add(quesitonText: string, options: table, value: number?, customQuestion: table?)
+function categoryManager:Add(quesitonText: string, options: { string }, value: number?, customQuestion: table?)
     self = customQuestion or self
     local newQuestion = question.New(quesitonText, options, value)
     table.insert(self, newQuestion)
@@ -1209,7 +1209,7 @@ end
 
 local function RemoveDuplicateCategories(targetTable: table, categoryName: string, suffix: string)
     local tempTable = table.clone(targetTable) -- to prevent weird stuff from happening when the loop removes items from the table while it is actively running
-    for i=1, #targetTable do
+    for i = 1, #targetTable do
         if IsCategoryEqual(categoryName, targetTable[i], suffix) then -- remove all of the category's quizzes to prevent duplicates
             table.remove(tempTable, table.find(tempTable, targetTable[i]))
         end
@@ -1248,7 +1248,7 @@ function CustomCategoryManager.New(categoryName: string, difficulty: string?)
     notify("Can't add custom quiz", "See the output for more information")
 end
 
-function CustomCategoryManager:Add(quesitonText: string, options: table, value: number?)
+function CustomCategoryManager:Add(quesitonText: string, options: { string }, value: number?)
     if type(quesitonText) == "string" then
         if type(options) == "table" then
             if #options > 1 then
