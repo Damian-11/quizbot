@@ -1,4 +1,4 @@
-local VERSION = "2.0.2"
+local VERSION = "2.0.3"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -961,11 +961,11 @@ animals:Add("What is the only mammal that can fly?", {"Bat", "Penguin", "Pteroda
 animals:Add("Which of these “fish” is actually a fish?", {"Swordfish", "Starfish", "Crayfish", "Jellyfish"})
 
 local sports = categoryManager.New("Sports")
-sports:Add("What sport is played on a field with 15 players on each team?", {"Rugby", "Soccer", "Cricket", "Lacrosse"})
-sports:Add("What is the name of the trophy awarded to the winner of the NBA Finals?", {"Larry O'Brien Trophy", "NBA Champion Trophy", "Stanley Cup", "World Series Trophy"}, 2)
+sports:Add("In which sport might you perform a 'bicycle kick'?", {"Football (Soccer)", "Basketball", "Rugby", "Tennis"})
 sports:Add("Which country is famous for inventing sumo wrestling?", {"Japan", "China", "India", "Thailand"})
-sports:Add("What sport involves sliding stones on a sheet of ice towards a target area?", {"Curling", "Bobsleigh", "Luge", "Ice hockey"}, 2)
+sports:Add("What animal is used in the traditional sport of polo?", {"Horse", "Camel", "Elephant", "Yak"})
 sports:Add("What sport is also known as table tennis?", {"Ping pong", "Badminton", "Squash", "Tennis"})
+sports:Add("What is the name of the trophy awarded to the winner of the NBA Finals?", {"Larry O'Brien Trophy", "NBA Champion Trophy", "Stanley Cup", "World Series Trophy"}, 2)
 
 local minecraft = categoryManager.New("Minecraft")
 minecraft:Add("What is the name of the green creature that explodes?", {"Creeper", "Zombie", "Skeleton", "Slime"})
