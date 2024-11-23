@@ -1,4 +1,4 @@
-local VERSION = "2.0.3"
+local VERSION = "2.1.0"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -115,6 +115,14 @@ local function notify(title: string, text: string, configTable: { any }?, durati
         notifyBindable.OnInvoke = configTable.Callback
     end
 end
+
+if getgenv().QUIZBOT_RUNNING then
+    notify("quizbot is already running", "You cannot run two instances of quizbot at once")
+    return
+end
+pcall(function()
+    getgenv().QUIZBOT_RUNNING = true
+end)
 
 local DATA_FILENAME = "quizbot_data.json"
 type dataValueType = string | number | boolean
@@ -314,10 +322,7 @@ local function SplitIntoMessages(itemTable: { string }, separtor: string, waitTi
     local tempItemList = {}
     local messages = {}
     local currentLength = 0
-    for _, item in pairs(itemTable) do
-        if quizRunning then
-            return
-        end
+    for _, item in itemTable do
         if currentLength + #item + (#separtor * #tempItemList) + 6 >= maxCharactersInMessage then -- maxCharactersInMessage characters is the limit for chat messages in Roblox. For each item, we are adding a sepatator. +6 at end for " [x/x]" at the end of message
             local conctatTable = table.concat(tempItemList, separtor)
             table.insert(messages, conctatTable)
@@ -329,20 +334,21 @@ local function SplitIntoMessages(itemTable: { string }, separtor: string, waitTi
             currentLength = currentLength + #item
         end
     end
-    if not quizRunning then
-        table.insert(messages, table.concat(tempItemList, separtor))
-    end
+    table.insert(messages, table.concat(tempItemList, separtor))
     for messageIndex, message in messages do
-        local messageNumberString = string.format("(%d/%d)", messageIndex, #messages) -- [current message/amount of messages]
-        if messageIndex == 2 or messageIndex == 3 then
-            Chat("Waiting for filter...") -- hacky solution that prevents the second message getting filtered
-            task.wait(6)
-        end
-        Chat(message.." "..messageNumberString)
-        task.wait(waitTime or CalculateReadTime(message) * 0.7) -- multiplied by 0.7 because full read time is too long
         if quizRunning then
             return
         end
+        local messageNumberString = string.format("(%d/%d)", messageIndex, #messages) -- [current message/amount of messages]
+        if messageIndex == 2 or messageIndex == 3 then
+            Chat("Waiting for filter...") -- hacky solution that prevents the second message getting filtered (sometimes works)
+            task.wait(6)
+        end
+        if quizRunning then
+            return
+        end
+        Chat(message.." "..messageNumberString)
+        task.wait(waitTime or CalculateReadTime(message) * 0.7) -- multiplied by 0.7 because full read time is too long
     end
 end
 
@@ -1077,7 +1083,7 @@ internetSlang:Add("What does 'LOL' stand for?", {"Laugh Out Loud", "Lots Of Love
 internetSlang:Add("What does 'FOMO' stand for?", {"Fear Of Missing Out", "Friends Of My Office", "Fond Of Moving On", "Full Of Many Options"})
 internetSlang:Add("What does 'IMO' stand for?", {"In My Opinion", "Internet Mail Order", "It's Monday Obviously", "I Mean Okay"})
 internetSlang:Add("What is the meaning of 'SMH'?", {"Shaking My Head", "So Much Hate", "Send More Help", "Smashing My Head"})
-internetSlang:Add("What does 'IIRC' stand for?", {"If I Recall Correctly / If I Remember Correctly", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
+internetSlang:Add("What does 'IIRC' stand for?", {"If I Recall Correctly (If I Remember Correctly)", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
 
 local internetSlang2 = categoryManager.New("Internet Slang", "medium")
 internetSlang2:Add("What does 'FTFY' mean?", {"Fixed That For You", "For The Following Year", "Forget That, Find Yourself", "Faster Than Fifty Yaks"})
@@ -1177,10 +1183,10 @@ end
 table.sort(categoriesToSend)
 
 local firstTimeSendingCategories = true -- Roblox often filters the category table the first time you try to send it
-local currentlySendingCategoryList = false
+local currentlySending: string? -- gives alert in this format: "[currentlySending] currently being sent"
 local function sendCategories()
-    if not quizRunning and not currentlySendingCategoryList then
-        currentlySendingCategoryList = true
+    if not quizRunning and not currentlySending then
+        currentlySending = "Category list is"
         if firstTimeSendingCategories then
             notify("Warning: possible filtering", "If the category list gets filtered the first time, try resending it after running a quiz")
         end
@@ -1192,9 +1198,11 @@ local function sendCategories()
         end
         SplitIntoMessages(categoriesToSend, ", ", waitTime)
         firstTimeSendingCategories = false
-        currentlySendingCategoryList = false
-    elseif currentlySendingCategoryList then
-        notify("Category list is currently being sent", "Wait for it to finish sending before sending it again")
+        currentlySending = nil
+    elseif currentlySending then
+        notify(`{currentlySending} currently being sent`, "Wait for it to finish sending before sending the category list")
+    elseif quizRunning then
+        notify("Can't send cateogry list", "Can't send the category list while quiz is running. Stop the current quiz or wait for it to end")
     end
 end
 
@@ -1288,16 +1296,15 @@ local function sortUserPoints(type)
 end
 
 local medalEmojis = {"🥇 ", "🥈 ", "🥉 "}
-local currentlySendingLeaderboard = false
-local function sendLeaderboard(type: string, message: string, quizIsRunning: boolean)
-    if quizIsRunning then
+local function sendLeaderboard(type: string, message: string, triggeredByUser: boolean?)
+    if triggeredByUser and quizRunning then
         notify("Can't send LB", "Can't send LB while quiz is running. Stop the current quiz or wait for it to end")
         return
-    elseif currentlySendingLeaderboard then
-        notify("A leaderboard is currently being sent", "Wait for it to finish sending before sending a new one")
+    elseif currentlySending then
+        notify(`{currentlySending} currently being sent`, "Wait for it to finish sending before sending the leaderboard")
         return
     end
-    currentlySendingLeaderboard = true
+    currentlySending = "A LB is" -- abbreviate to LB to make sure text doesn't cut off in notification title
     local pointsArray
     message = message or ""
     if type == "Current quiz" then
@@ -1306,6 +1313,9 @@ local function sendLeaderboard(type: string, message: string, quizIsRunning: boo
         pointsArray = sortUserPoints("GlobalPoints")
     end
     task.wait(1.5)
+    if triggeredByUser and quizRunning then
+        return
+    end
     for i = 1, 3 do
         if pointsArray[i] and pointsArray[i][2] > 0 then
             if i == 1 then
@@ -1321,12 +1331,15 @@ local function sendLeaderboard(type: string, message: string, quizIsRunning: boo
                 pointWord = "point"
             end
             task.wait(2.5)
+            if triggeredByUser and quizRunning then
+                return
+            end
             Chat(medalEmojis[i]..displayName.." (@"..username..") - "..points.." "..pointWord)
             UpdateSignText(medalEmojis[i]..displayName)
         end
     end
     task.wait(2.5)
-    currentlySendingLeaderboard = false
+    currentlySending = nil
 end
 local leaderboardLabels = {
     CurrentQuizPoints = {},
@@ -1392,9 +1405,6 @@ local function startQuiz(category: string)
         return
     elseif quizCooldown then
         notify("Cooldown active", "Try again in a few seconds")
-        return
-    elseif currentlySendingCategoryList then
-        notify("Category list is currently being sent", "Wait for it to finish sending before starting a quiz")
         return
     end
     quizRunning = true
@@ -1486,6 +1496,14 @@ local kahootModeRules = {
     "Additionally, the first person who submits a correct answer gets 1.5x points.",
 }
 local function sendRules()
+    if quizRunning then
+        notify("Can't send rules", "Can't send rules while quiz is running. Stop the current quiz or wait for it to end")
+        return
+    elseif currentlySending then
+        notify(`{currentlySending} currently being sent`, "Wait for it to finish sending before sending the rules")
+        return
+    end
+    currentlySending = "The rules are"
     if mode == "Quiz" then
         Chat("📜 | Quiz mode rules:")
         task.wait(2)
@@ -1495,6 +1513,7 @@ local function sendRules()
         task.wait(2)
         SplitIntoMessages(kahootModeRules, " ")
     end
+    currentlySending = nil
 end
 
 game:GetService("Players").PlayerRemoving:Connect(function(player) -- remove player's userpoint account on leave
@@ -1628,14 +1647,16 @@ mainTab:CreateButton({
 mainTab:CreateButton({
     Name = "Stop quiz",
     Callback = function()
-        quizCooldown = true
-        quizRunning = false
-        currentQuestion = nil
-        questionAnsweredBy = nil
-        awaitingAnswer = false
-        task.delay(5, function()
-            quizCooldown = false
-        end)
+        if quizRunning then
+            quizCooldown = true
+            quizRunning = false
+            currentQuestion = nil
+            questionAnsweredBy = nil
+            awaitingAnswer = false
+            task.delay(5, function()
+                quizCooldown = false
+            end)
+        end
     end
 })
 
@@ -1647,7 +1668,7 @@ table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥉 [E
 leaderboardTab:CreateButton({
     Name = "Send server leaderboard in chat",
     Callback = function()
-        sendLeaderboard("Server", "🏆 | ", quizRunning)
+        sendLeaderboard("Server", "🏆 | ", true)
     end
 })
 
@@ -1658,7 +1679,7 @@ table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("�
 leaderboardTab:CreateButton({
     Name = "Send current quiz leaderboard in chat",
     Callback = function()
-        sendLeaderboard("Current quiz", "📜 | ", quizRunning)
+        sendLeaderboard("Current quiz", "📜 | ", true)
     end
 })
 
@@ -1972,6 +1993,9 @@ settingsTab:CreateButton({
         awaitingAnswer = false
         ContextActionService:UnbindAction("ToggleUI")
         library:Destroy()
+        pcall(function()
+            getgenv().QUIZBOT_RUNNING = false
+        end)
     end
 })
 
