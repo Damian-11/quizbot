@@ -11,6 +11,8 @@ myCategory:Add("What does the word 'Agua' mean in Spanish?", {"Water", "Milk", "
 Check out https://github.com/Damian-11/quizbot/blob/master/README.md#how-to-add-custom-categories-and-questions for more information about adding custom questions
 --]]
 ```
+![Quizbot banner_final](https://github.com/user-attachments/assets/6a336189-219d-4402-827c-e7cfaf3ea781)
+
 # How to add custom categories (and questions)
 First, let's go over the difference between a `category`, a `quiz`, and a `question`:
 - Category: A group/container of one or more `quizzes` about the same topic. Two categories can never share a name. Some examples of categories included with the script are:
