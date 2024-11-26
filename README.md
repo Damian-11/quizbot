@@ -1,4 +1,4 @@
-# Quiz bot script
+# quizbot script
 To run the script, paste this code into your preferred executor:
 ```lua
 local CategoryManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()
