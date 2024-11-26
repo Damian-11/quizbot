@@ -1,4 +1,4 @@
-local VERSION = "2.1.0"
+local VERSION = "2.2.0"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -124,14 +124,22 @@ pcall(function()
     getgenv().QUIZBOT_RUNNING = true
 end)
 
+local function copyLatestScript() -- copies latest loadstring version of the script to clipboard
+    setclipboard('loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()')
+    notify("Script copied", "The latest version of quizbot has been copied to your clipboard")
+end
+
 local DATA_FILENAME = "quizbot_data.json"
 type dataValueType = string | number | boolean
 local data = {} :: {[string]: dataValueType}
-if isfile(DATA_FILENAME) then
+if isfile and isfile(DATA_FILENAME) then
     data = HttpService:JSONDecode(readfile(DATA_FILENAME))
 end
 
 local function writeToDataFile(key: string, value: dataValueType)
+    if not writefile then
+        return
+    end
     data[key] = value
     writefile(DATA_FILENAME, HttpService:JSONEncode(data))
 end
@@ -145,22 +153,15 @@ local success, LATEST_VERSION: string = pcall(function()
     return loadstring(game:HttpGet(LATEST_VERSION_URL))() -- this returns a string, such as "2.5.7"
 end)
 
-if success and LATEST_VERSION and VERSION ~= LATEST_VERSION then
+local outdated = if success and LATEST_VERSION then VERSION ~= LATEST_VERSION else false
+if outdated then
     if not getDataFileValue("disableVersionAlert") then -- true if user has presses "Don't show again" before
         notify(
             "Outdated quizbot version",
             "You are running an outdated version of quizbot. Click the button below to copy the latest version of this script",
             {
-                Callback = function(buttonText: string)
-                    if buttonText == "Copy latest version" then
-                        setclipboard('loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()')
-                        notify("Script copied", "The latest version of quizbot has been copied to your clipboard")
-                    else
-                        writeToDataFile("disableVersionAlert", true)
-                    end
-                end,
+                Callback = copyLatestScript,
                 Button1 = "Copy latest version",
-                Button2 = "Don't show again",
             },
             10
         )
@@ -1573,18 +1574,18 @@ local library, window
 local success, errorMessage = pcall(function()
     library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/stable/source.lua'))() -- Rayfield lib
     window = library:CreateWindow({
-        Name = "Quizbot | Made by Damian11 AKA Quizzer",
+        Name = "quizbot | Made by Damian11 AKA Quizzer",
         LoadingTitle = "Loading quizbot...",
         LoadingSubtitle = "made by Damian11 AKA Quizzer",
         DisableRayfieldPrompts = true,
     })
 end)
 if not success then -- if the libary is down for any reason, ask user to report it on discord
-    notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
+    notify("quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
         Callback = setclipboard("https://discord.gg/wm384KFFMC"),
         Button1 = "Copy invite link"
     })
-    warn("Quizbot error [UI LIB] | " .. errorMessage)
+    warn("quizbot error [UI LIB] | " .. errorMessage)
     return -- stops the script
 end
 
@@ -1603,6 +1604,19 @@ if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
 end
 
 local mainTab = window:CreateTab("Main", 81072774414061)
+
+if outdated and not getDataFileValue("disableVersionAlert") then
+    mainTab:CreateSection("Outdated version warning")
+    mainTab:CreateParagraph({
+        Title = "Outdated quizbot version",
+        Content = "You are using an outdated version of quizbot. Use the latest version to access new features, updated quizzes, and more. [Disable in settings]"
+    })
+    mainTab:CreateButton({
+        Name = "Click this button copy the latest version of quizbot",
+        Callback = copyLatestScript,
+    })
+end
+
 mainTab:CreateSection("Category selection")
 local categoryLabel
 local selectedCategory
@@ -1972,6 +1986,15 @@ if boothGame then
     Callback = function(value)
         settings.romanNumbers = not value
     end})
+end
+if outdated then
+    settingsTab:CreateToggle({
+        Name = "Disable outdated version alerts",
+        CurrentValue = getDataFileValue("disableVersionAlert"),
+        Callback = function(value)
+            writeToDataFile("disableVersionAlert", value)
+        end
+    })
 end
 
 settingsTab:CreateSection("Disable script")
