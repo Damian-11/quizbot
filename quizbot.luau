@@ -1,4 +1,4 @@
-local VERSION = "2.2.0"
+local VERSION = "2.3.0"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -219,6 +219,7 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
     importantMessageSent = false
 end
 
+-- Booth Game integration is currently broken. I won't bother fixing it every time they update the remote events
 local boothGame = false
 local signRemote
 local changeSignTextRemote
@@ -300,10 +301,15 @@ function question:Ask(): boolean
         Chat("➡️ | Repeated filtering detected. Skipping to the next question...")
         return false
     end
-    if not quizRunning then
-        return true
+    local waitTime = CalculateReadTime(self.mainQuestion)
+    local timeWaited = 0
+    while waitTime > timeWaited do -- check if someone answered every 0.1ms while waiting to send options
+        if questionAnsweredBy or not quizRunning then
+            return true
+        end
+        task.wait(0.1)
+        timeWaited += 0.1
     end
-    task.wait(CalculateReadTime(self.mainQuestion))
     for i, v in ipairs(self.answers) do
         if questionAnsweredBy or not quizRunning then
             return true
@@ -319,7 +325,7 @@ function question:Ask(): boolean
     end
 end
 
-local function SplitIntoMessages(itemTable: { string }, separtor: string, waitTime: number?) -- split table into multiple messages to prevent roblox cutting down the message
+local function SplitIntoMessages(itemTable: { string }, separtor: string, clearFilter: boolean?, waitTime: number?) -- split table into multiple messages to prevent roblox cutting down the message
     local tempItemList = {}
     local messages = {}
     local currentLength = 0
@@ -342,14 +348,16 @@ local function SplitIntoMessages(itemTable: { string }, separtor: string, waitTi
         end
         local messageNumberString = string.format("(%d/%d)", messageIndex, #messages) -- [current message/amount of messages]
         if messageIndex == 2 or messageIndex == 3 then
-            Chat("Waiting for filter...") -- hacky solution that prevents the second message getting filtered (sometimes works)
+            if clearFilter then
+                Chat("Waiting for filter...") -- hacky solution that prevents the second message getting filtered (sometimes works)
+            end
             task.wait(6)
         end
         if quizRunning then
             return
         end
         Chat(message.." "..messageNumberString)
-        task.wait(waitTime or CalculateReadTime(message) * 0.7) -- multiplied by 0.7 because full read time is too long
+        task.wait(waitTime or CalculateReadTime(message) * 0.7) -- multiplied by 0.7 because full read time is too long for longer texts
     end
 end
 
@@ -843,17 +851,17 @@ science2:Add("What is the powerhouse of the cell?", {"Mitochondria", "Nucleus", 
 
 local history = categoryManager.New("History")
 history:Add("Which of these countries did the Soviet Union NEVER invade?", {"Sweden", "Afghanistan", "Finland", "Poland"})
-history:Add("What was the main cause of the French Revolution in 1789?", {"The social and economic inequality of the Third Estate", "The invasion of Napoleon Bonaparte", "The death of King Louis XVI", "The spread of the Black Death"})
-history:Add("Which of these historical events happened first?", {"The American Revolution", "The French Revolution", "The Industrial Revolution", "The Russian Revolution"}, 2)
+history:Add("What was the main cause of the French Revolution in 1789?", {"The social and economic inequality of the Third Estate", "The invasion of Napoleon Bonaparte", "Disputes over territorial boundaries with neighboring countries", "The spread of the Black Death"})
 history:Add("What ancient civilization built the Machu Picchu complex?", {"Inca", "Aztec", "Maya", "Egypt"})
-history:Add("In what modern-day country was Karl Marx, the communist philosopher, born?", {"Germany", "France", "Russia", "China"}, 2)
+history:Add("What do people call the era before written records?", {"Prehistory", "Medieval Times", "Renaissance", "Industrial Age"})
+history:Add("Which of these historical events happened first?", {"The American Revolution", "The French Revolution", "The Industrial Revolution", "The Russian Revolution"}, 2)
 
 local history2 = categoryManager.New("History")
 history2:Add("The disease that killed a third of Europe's population in the 14th century is known as:", {"Plague (Black Death)", "Spanish Flu", "Smallpox", "Malaria"})
-history2:Add("What famous rifle is known in America as 'The Gun that Won the West?'", {"Winchester Model 1873", "Henry Repeating Rifle", "Colt Peacemake", "Remington Army Revolver"}, 2)
-history2:Add("Were Italy and the United Kingdom allies or enemies during World War One?", {"Allies", "Enmies"})
-history2:Add("How were Holy Roman Emperors chosen?", {"A small group of princes elected them", "They got chosen by the pope", "Democratic vote of the people"}, 2)
-history2:Add("Where and when was Siddhārtha Gautama, AKA Buddha, born?", {"Approx. 500 BC, Nepal", "Approx. 1 AD, Palestine", "Approx. 900 AD, China"})
+history2:Add("Who discovered America in 1492?", {"Christopher Columbus", "Marco Polo", "Ferdinand Magellan", "Leif Erikson"})
+history2:Add("Which country gifted the Statue of Liberty to the United States?", {"France", "Germany", "United Kingdom", "Spain"})
+history2:Add("What was the name of the period of renewed interest in art and learning?", {"Renaissance", "Reformation", "Enlightenment", "Industrial Revolution"}, 2)
+history2:Add("Which famous trade route connected Europe and Asia?", {"Silk Road", "Spice Route", "Amber Road", "Trans-Saharan Route"})
 
 local foodAndDrink = categoryManager.New("Food and drink")
 foodAndDrink:Add("Which country is the largest producer of coffee in the world?", {"Brazil", "Vietnam", "Colombia", "Ethiopia"})
@@ -1197,7 +1205,7 @@ local function sendCategories()
         if firstTimeSendingCategories then
             waitTime = 7
         end
-        SplitIntoMessages(categoriesToSend, ", ", waitTime)
+        SplitIntoMessages(categoriesToSend, ", ", true, waitTime)
         firstTimeSendingCategories = false
         currentlySending = nil
     elseif currentlySending then
@@ -1318,7 +1326,7 @@ local function sendLeaderboard(type: string, message: string, triggeredByUser: b
         return
     end
     for i = 1, 3 do
-        if pointsArray[i] and pointsArray[i][2] > 0 then
+        if pointsArray[i] and pointsArray[i][2] > 0 then -- if entry exisits and player has more than 0 points
             if i == 1 then
                 Chat(message..type.." leaderboard:")
             end
@@ -1391,6 +1399,19 @@ for categoryName, category in categoryLookupTable do -- find how many categories
     end
 end
 local function choseAutoplayCategory()
+    local autoplayComplete = true -- true if every category has been played
+    for _, difficulty in autoPlayDifficulties do -- do this each time in case the user changes the autoplay filter
+        if autoplayChosenCategories[difficulty] and not #autoplayChosenCategories[difficulty] == numberOfCategoriesPerDifficulty[difficulty] then
+            autoplayComplete = false
+            break
+        elseif not autoplayChosenCategories[difficulty] then -- if the difficulty has not been chosen yet at all
+            autoplayComplete = false
+            break
+        end
+    end
+    if autoplayComplete then -- if every category has been chosen, clear the chosencategories table
+        table.clear(autoplayChosenCategories)
+    end
     local chosenCategory = categoryTable[math.random(#categoryTable)]
     local chosenCategoryDifficulty = categoryLookupTable[chosenCategory][2]
     if (autoplayChosenCategories[chosenCategoryDifficulty] and table.find(autoplayChosenCategories[chosenCategoryDifficulty], chosenCategory)) or not table.find(autoPlayDifficulties, categoryLookupTable[chosenCategory][2]) then -- if category has been previously chosen, chose another category
@@ -1400,12 +1421,19 @@ local function choseAutoplayCategory()
     end
 end
 
-local function startQuiz(category: string)
+local function isFreeToRunQuiz(): boolean
     if quizRunning then
         notify("A quiz is currently running", "Stop the current quiz or wait for it to end")
-        return
+        return false
     elseif quizCooldown then
         notify("Cooldown active", "Try again in a few seconds")
+        return false
+    end
+    return true
+end
+
+local function startQuiz(category: string)
+    if not isFreeToRunQuiz() then
         return
     end
     quizRunning = true
@@ -1464,19 +1492,6 @@ local function startQuiz(category: string)
             table.insert(autoplayChosenCategories[categoryLookupTable[category][2]], category)
         end
         Chat("🎲 | Picking next category...")
-        local autoPlayComplete = true -- true if every category has been played
-        for _, difficulty in autoPlayDifficulties do -- do this each time in case the user changes the autoplay filter
-            if autoplayChosenCategories[difficulty] and not #autoplayChosenCategories[difficulty] == numberOfCategoriesPerDifficulty[difficulty] then
-                autoPlayComplete = false
-                break
-            elseif not autoplayChosenCategories[difficulty] then -- if the category has not been chosen yet at all
-                autoPlayComplete = false
-                break
-            end
-        end
-        if autoPlayComplete then -- if every category has been chosen, clear the chosencategories table
-            table.clear(autoplayChosenCategories)
-        end
         local chosenCategory = choseAutoplayCategory()
         task.wait(6)
         startQuiz(chosenCategory)
@@ -1484,13 +1499,13 @@ local function startQuiz(category: string)
 end
 
 local quizModeRules = {
-    "Each question has one right answer and one to three wrong answers.",
-    "If you answer correctly, you will earn one point (or two points if the question is a double point question).",
-    "If you answer incorrectly, you will have to wait "..tostring(settings.userCooldown).." seconds before you can submit another answer.",
+    "Each question has one correct answer and one or more wrong answers. You can submit your answers only through text chat, not voice.",
+    "If you submit an incorrect answer, you will always have to wait "..tostring(settings.userCooldown).." seconds before you can submit another answer.",
+    "If you submit a correct answer, you will earn points.",
 }
 local kahootModeRules = {
-    "Each question has one right answer and one to three wrong answers.",
-    "You can only submit ONE answer per round.", "The first answer you submit is your final answer, and it can not be changed.",
+    "Each question has one correct answer and one or more wrong answers. You can submit your answers only through text chat, not voice.",
+    "You can only submit ONE answer per question.", "The first answer you submit is your final answer, and it can not be changed.",
     "You have "..tostring(settings.questionTimeout).." seconds to answer the question after all the options have been said.",
     "Every second after all the options have been said, the points you will gain for answering correctly decrease.",
     "In other words, the quicker you answer, the more points you will gain.",
@@ -1751,7 +1766,9 @@ playerControlTab:CreateDropdown({
 playerControlTab:CreateButton({
     Name = "Apply points",
     Callback = function()
-        if not TargetExists(targetPlayer) then return end
+        if not TargetExists(targetPlayer) then
+            return
+        end
         if pointsToAdd then
             if pointsType == "Server points" then
                 pointManager.AddPoints(targetPlayer, pointsToAdd, "GlobalPoints")
@@ -1855,7 +1872,7 @@ playerControlTab:CreateButton({
 
 local settingsTab = window:CreateTab("Settings", 124411316797456)
 settingsTab:CreateSection("Discord server")
-settingsTab:CreateLabel("Join my Discord server for support: discord.gg/wm384KFFMC")
+settingsTab:CreateLabel("Join my Discord server: discord.gg/wm384KFFMC")
 settingsTab:CreateButton({
     Name = "Click this button to copy the invite link",
     Callback = function()
@@ -1906,6 +1923,16 @@ settingsTab:CreateDropdown({
             filteredTable[table.find(filteredTable, "Missing difficulty")] = ""
         end
         autoPlayDifficulties = filteredTable
+    end
+})
+settingsTab:CreateButton({
+    Name = "Play random quiz",
+    Callback = function()
+        if isFreeToRunQuiz() then
+            local chosenCategory = choseAutoplayCategory()
+            notify("Random quiz chosen", `Starting {chosenCategory} quiz`)
+            startQuiz(chosenCategory)
+        end
     end
 })
 
