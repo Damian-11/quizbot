@@ -100,16 +100,19 @@ local myCategory = CustomCategoryManager.New("Category Name", "Difficulty name")
 ```
 The difficulty name can be anything (difficulties are not case sensitive, e.g. EASY = easy). The ones used in the premade quizzes are: `easy`, `medium`, `hard`.
 I'd recommend sticking to those if you can to prevent overcomplicating things, but you're free to create your own difficulties if you want.
-Difficulties only get appended to the names of quizzes when the category contains more than one quiz. 
-
+Difficulties only get appended to the names of quizzes when the category contains two or more quizzes with different difficulties from each other.
 Let's say you wanted to create a *birds* quiz:
 ```lua 
 local birdsEasy = CustomCategoryManager.New("Birds", "easy")
 [questions]
 ```
-The quiz works; however it simply appears as "Birds" in the dropdown menu and when you send a list of categories.
+The quiz works; however it simply appears as "Birds" in the dropdown menu and when sending the category list (with *detailed category list* turned on in settings).
+
+Dropdown menu:
 
 ![image](https://github.com/user-attachments/assets/2215ac4d-afcd-426e-abe0-110e096a685e)
+
+When sending the category list in chat:
 
 ![image](https://github.com/user-attachments/assets/d99f6073-e0c5-42cc-9e2b-388e3622ac25)
 
