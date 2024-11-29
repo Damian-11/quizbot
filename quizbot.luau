@@ -1,4 +1,4 @@
-local VERSION = "2.3.0"
+local VERSION = "2.4.0"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -37,7 +37,8 @@ local settings = {
     signStatus = true,
     romanNumbers = true,
     autoplay = false,
-    repeatTagged = true
+    repeatTagged = true,
+    sendDetailedCategorylist = false, -- off by default since sending it this way tends to trigger the filter. Blame Roblox
 }
 
 local numberMap = {
@@ -325,7 +326,7 @@ function question:Ask(): boolean
     end
 end
 
-local function SplitIntoMessages(itemTable: { string }, separtor: string, clearFilter: boolean?, waitTime: number?) -- split table into multiple messages to prevent roblox cutting down the message
+local function splitIntoMessages(itemTable: { string }, separtor: string, clearFilter: boolean?, waitTime: number?) -- split table into multiple messages to prevent roblox cutting down the message
     local tempItemList = {}
     local messages = {}
     local currentLength = 0
@@ -806,7 +807,6 @@ local function awaitAnswer(targetQuestion)
 end
 
 --- Questions ---
-
 local countriesEasy = categoryManager.New("Guess the country", "easy")
 countriesEasy:Add("What country is this? 🇹🇷", {"Turkey", "Spain", "Greece", "Cyprus"})
 countriesEasy:Add("What country is this? 🇪🇸", {"Spain", "Portugal", "Greece", "Mexico"})
@@ -835,56 +835,56 @@ countriesHard:Add("What country is this? 🇫🇮", {"Finland", "Sweden", "Falkl
 countriesHard:Add("What country is this? 🇿🇲", {"Zambia", "Zimbabwe", "Zaire"}, 2)
 countriesHard:Add("What country is this? 🇸🇴", {"Somalia", "Solomon Islands", "Samoa"})
 
-local science = categoryManager.New("Science")
+local science = categoryManager.New("Science", "medium")
 science:Add("The standard unit of measurement used for measuring force is which of the following?", {"Newton", "Mile", "Watt", "Kilogram"})
 science:Add("How long does it take the earth to do one full rotation of the sun?", {"365 days", "7 days", "30 days"})
 science:Add("Oil, natural gas and coal are examples of …", {"Fossil fuels", "Renewable resources", "Biofuels", "Geothermal resources"}, 2)
 science:Add("Why do our pupils constrict in bright light?", {"To let in less light", "To give our eyes more oxygen", "To change our vision to 3D"})
 science:Add("What is cooling lava called?", {"Igneous rocks", "Magma", "Fossils"})
 
-local science2 = categoryManager.New("Science")
+local science2 = categoryManager.New("Science", "medium")
 science2:Add("What is faster, sound or light?", {"Light", "Sound", "They travel at the same speed", "They don't move"})
 science2:Add("Which of these is not one of Newton's laws of motion?", {"Objects at rest stay in motion", "Force equals mass times acceleration", "Every action has an equal and opposite reaction", "An object in motion stays in motion"})
 science2:Add("Who developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo"})
 science2:Add("Which of these is not a state of matter?", {"Energy", "Solid", "Liquid", "Gas"})
 science2:Add("What is the powerhouse of the cell?", {"Mitochondria", "Nucleus", "Cytoplasm", "Nucleic membrane"}, 2)
 
-local history = categoryManager.New("History")
+local history = categoryManager.New("History", "medium")
 history:Add("Which of these countries did the Soviet Union NEVER invade?", {"Sweden", "Afghanistan", "Finland", "Poland"})
 history:Add("What was the main cause of the French Revolution in 1789?", {"The social and economic inequality of the Third Estate", "The invasion of Napoleon Bonaparte", "Disputes over territorial boundaries with neighboring countries", "The spread of the Black Death"})
 history:Add("What ancient civilization built the Machu Picchu complex?", {"Inca", "Aztec", "Maya", "Egypt"})
 history:Add("What do people call the era before written records?", {"Prehistory", "Medieval Times", "Renaissance", "Industrial Age"})
 history:Add("Which of these historical events happened first?", {"The American Revolution", "The French Revolution", "The Industrial Revolution", "The Russian Revolution"}, 2)
 
-local history2 = categoryManager.New("History")
+local history2 = categoryManager.New("History", "medium")
 history2:Add("The disease that killed a third of Europe's population in the 14th century is known as:", {"Plague (Black Death)", "Spanish Flu", "Smallpox", "Malaria"})
 history2:Add("Who discovered America in 1492?", {"Christopher Columbus", "Marco Polo", "Ferdinand Magellan", "Leif Erikson"})
 history2:Add("Which country gifted the Statue of Liberty to the United States?", {"France", "Germany", "United Kingdom", "Spain"})
 history2:Add("What was the name of the period of renewed interest in art and learning?", {"Renaissance", "Reformation", "Enlightenment", "Industrial Revolution"}, 2)
 history2:Add("Which famous trade route connected Europe and Asia?", {"Silk Road", "Spice Route", "Amber Road", "Trans-Saharan Route"})
 
-local foodAndDrink = categoryManager.New("Food and drink")
+local foodAndDrink = categoryManager.New("Food and drink", "medium")
 foodAndDrink:Add("Which country is the largest producer of coffee in the world?", {"Brazil", "Vietnam", "Colombia", "Ethiopia"})
 foodAndDrink:Add("What is the name of the Italian dessert made from layers of sponge cake soaked in coffee and mascarpone cheese?", {"Tiramisu", "Maritozzo", "Cannoli", "Zabaglione"})
 foodAndDrink:Add("What is the main ingredient of the Spanish dish, Paella?", {"Rice", "Bread", "Pasta", "Chicken"})
 foodAndDrink:Add("What is the name of the fermented milk drink that is popular in Central Asia & Eastern Europe?", {"Kefir", "Karin", "Kulmel", "Yogurt"})
 foodAndDrink:Add("Which country does feta cheese come from?", {"Greece", "Switzerland", "Spain", "France"}, 2)
 
-local trivia = categoryManager.New("Trivia")
+local trivia = categoryManager.New("Trivia", "medium")
 trivia:Add("Which is NOT a Nobel Prize category?", {"Mathematics", "Physics", "Literature", "Chemistry"})
 trivia:Add("Which musical instrument has 47 strings and seven pedals?", {"Harp", "Piano", "Guitar", "Violin"})
 trivia:Add("What is the capital city of Japan?", {"Tokyo", "Beijing", "Seoul", "Bangkok"})
 trivia:Add("Which country is the only one to have a non-rectangular flag?", {"Nepal", "Switzerland", "Japan", "Qatar"})
 trivia:Add("'Bokmal' and 'Nynorsk' are the two official written forms of WHICH language?", {"Norwegian", "Italian", "Danish", "Spanish"}, 2)
 
-local trivia2 = categoryManager.New("Trivia")
+local trivia2 = categoryManager.New("Trivia", "medium")
 trivia2:Add("Which animal is the national emblem of Australia?", {"Kangaroo", "Koala", "Emu", "Platypus"})
 trivia2:Add("What does the Richter scale measure?", {"Earthquake intensity", "Wind Speed", "Temperature", "Tornado Strength"}, 2)
 trivia2:Add("Which currency is used in Japan?", {"Yen", "Dollar", "Euro", "Pound"})
 trivia2:Add("Which famous scientist developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo Galilei", "Charles Darwin"})
 trivia2:Add("In sport, what does the term PGA refer to?", {"Professional Golfers Association", "Par Golfing Average", "Playing Golf Average", "Part-Time Golfing Amaterurs"})
 
-local guessTheLanguage = categoryManager.New("Guess the language")
+local guessTheLanguage = categoryManager.New("Guess the language", "medium")
 guessTheLanguage:Add("Je suis désolé", {"French", "Spanish", "Italian", "Portuguese"})
 guessTheLanguage:Add("בוקר טוב", {"Hebrew", "Tamil", "Lao", "Mandarin"})
 guessTheLanguage:Add("Guten Tag", {"German", "Tagalog", "Finnish", "Dutch"})
@@ -926,70 +926,70 @@ geographyHard:Add("Which one of the following countries is not an enclave?", {"I
 geographyHard:Add("Which is the northernmost capital city in the world?", {"Reykjavik, Iceland", "Oslo, Norway", "Helsinki, Finland", "Moscow, Russia"})
 geographyHard:Add("Which city is the only one located on two continents?", {"Istanbul", "Cairo", "Moscow", "Panama City"})
 
-local gaming = categoryManager.New("Gaming")
+local gaming = categoryManager.New("Gaming", "medium")
 gaming:Add("What is the best-selling video game of all time?", {"Minecraft", "FIFA 18", "Call of Duty: Modern Warfare 3", "Tetris"})
 gaming:Add("What was the first commercially successful video game?", {"Pong", "Donkey Kong Country", "Super Mario Bros", "Spacewar"})
 gaming:Add("What is the name of the main character in the Legend of Zelda series?", {"Link", "Zelda", "Ganon", "Mario"})
 gaming:Add("What video game did Mario, the Nintendo character, first appear in?", {"Donkey Kong", "Super Mario Bros", "Marios Cement Factory", "Mario Bros"}, 2)
 gaming:Add("What is the name of the virtual reality device developed by Valve?", {"Valve Index", "Oculus Rift", "Meta Quest", "Valve VR"})
 
-local gaming2 = categoryManager.New("Gaming")
+local gaming2 = categoryManager.New("Gaming", "medium")
 gaming2:Add("Which company created the Mario franchise?", {"Nintendo", "Sony", "Microsoft", "Sega"})
 gaming2:Add("What is the name of the game developer who created Half-Life, Portal, and Counter-Strike?", {"Valve", "Blizzard", "Bethesda", "Rockstar"})
 gaming:Add("What is the name of the gaming console that was released by Nintendo in 2006 and featured motion controls?", {"Wii", "Switch", "GameCube", "DS"})
 gaming2:Add("What is the name of the platform game series that features a plumber who rescues a princess from a turtle-like villain?", {"Super Mario", "Sonic the Hedgehog", "Crash Bandicoot", "Cuphead"})
 gaming2:Add("How many standalone Grand Theft Auto titles have been released?", {"7", "5", "8", "10"}, 2)
 
-local movies = categoryManager.New("Movies")
+local movies = categoryManager.New("Movies", "medium")
 movies:Add("Which actor played the role of Jack Sparrow in the 'Pirates of the Caribbean' franchise?", {"Johnny Depp", "Orlando Bloom", "Keira Knightley", "Geoffrey Rush"})
 movies:Add("What was the first movie in the Marvel Cinematic Universe?", {"Iron Man", "The Avengers", "Batman", "Spider-Man"}, 2)
 movies:Add("Which movie is based on the novel by J.R.R. Tolkien?", {"The Lord of the Rings", "The Chronicles of Narnia", "The Hunger Games", "The Da Vinci Code"})
 movies:Add("What is the name of the protagonist in The Matrix?", {"Neo", "Morpheus", "Trinity", "Cypher"})
 movies:Add("In the movie 'Frozen', who is Olaf?", {"A snowman", "A ghost", "A knight", "A reindeer"})
 
-local roblox = categoryManager.New("Roblox")
+local roblox = categoryManager.New("Roblox", "easy")
 roblox:Add("What was the original name of Roblox?", {"DynaBlocks", "SuperBlocks", "XtraBlocks"})
 roblox:Add("What is the name of Roblox's other virtual currency that has been removed since 2016?", {"Tix", "Builder Coins", "Ro-Points"})
 roblox:Add("What program do you use to make games on Roblox?", {"Roblox Studio", "Roblox Player", "Roblox Create", "Roblox Creator"})
 roblox:Add("Roblox's private servers were previously known as which of the following?", {"VIP servers", "Personal servers", "Exclusive servers"})
 roblox:Add("Who won the RB Battles season 1 championship?", {"KreekCraft", "Tofuu", "Seedeng", "BriannaPlayz"}, 2)
 
-local roblox2 = categoryManager.New("Roblox")
+local roblox2 = categoryManager.New("Roblox", "easy")
 roblox2:Add("What is another name for the avatar shop?", {"Catalog", "Avatar Creator", "Avatar Editor"})
 roblox2:Add("What programming language do you need to use to create Roblox games?", {"Luau", "JavaScript", "Python", "PHP"}, 2)
 roblox2:Add("What is the name of Roblox's annual developer conference?", {"RDC", "Robloxcon", "Robloxx", "Blockfest"})
 roblox2:Add("What was the former name of Roblox premium?", {"Builders Club", "Roblox Plus", "Roblox Pro", "VIP Club"})
 roblox2:Add("What was the very first Roblox game to reach 1B+ visits?", {"MeepCity", "Arsenal", "Build a Boat For Treasure", "Adopt Me"}, 2)
 
-local english = categoryManager.New("English")
-english:Add("I'm very happy _____ in India. I really miss being there.", {"to have lived", "to live", "to be living", "to be lived"})
-english:Add("They didn't reach an agreement ______ their differences.", {"on account of", "with", "because", "owing"})
-english:Add("I wish I _____ those words. But now it's too late.", {"had never said", "never said", "have never said", "not having said"}, 2)
-english:Add("She was working on her computer with her baby next to _____.", {"her", "them", "her own", "hers"})
-english:Add("_____ in trying to solve this problem. It's clearly unsolvable.", {"There's no point", "It's no point", "There isn't point", "It's no need"})
+local english = categoryManager.New("English", "easy")
+english:Add("Which of the following is a proper noun?", {"London", "City", "River", "Mountain"})
+english:Add("What is the correct way to punctuate this sentence?", {"However, I don't agree with your opinion.", "However I, don't agree with your opinion.", "However I don't, agree with your opinion.", "However; I don't agree with your opinion."})
+english:Add("Which word is an adjective?", {"Beautiful", "Run", "Quickly", "Table"})
+english:Add("Which is the correct spelling?", {"Necessary", "Neccessary", "Nessessary", "Necessay"})
+english:Add("What is the subject in the sentence: 'The cat chased the mouse across the yard'?", {"The cat", "The mouse", "The yard", "Chased"}, 2)
 
-local animals = categoryManager.New("Animals")
+local animals = categoryManager.New("Animals", "easy")
 animals:Add("What is the largest land animal?", {"Elephant", "Giraffe", "Whale", "Rhino"})
 animals:Add("What is the name of a baby kangaroo?", {"Joey", "Cub", "Pup", "Kit"})
 animals:Add("Capable of exceeding 186 miles per hour, what is the fastest creature in the animal kingdom?", {"Peregrine falcon", "Cheetah", "Horse", "Lion"})
 animals:Add("What is the only mammal that can fly?", {"Bat", "Penguin", "Pterodactyl", "Dragon"}, 2)
 animals:Add("Which of these “fish” is actually a fish?", {"Swordfish", "Starfish", "Crayfish", "Jellyfish"})
 
-local sports = categoryManager.New("Sports")
+local sports = categoryManager.New("Sports", "easy")
 sports:Add("In which sport might you perform a 'bicycle kick'?", {"Football (Soccer)", "Basketball", "Rugby", "Tennis"})
 sports:Add("Which country is famous for inventing sumo wrestling?", {"Japan", "China", "India", "Thailand"})
 sports:Add("What animal is used in the traditional sport of polo?", {"Horse", "Camel", "Elephant", "Yak"})
 sports:Add("What sport is also known as table tennis?", {"Ping pong", "Badminton", "Squash", "Tennis"})
 sports:Add("What is the name of the trophy awarded to the winner of the NBA Finals?", {"Larry O'Brien Trophy", "NBA Champion Trophy", "Stanley Cup", "World Series Trophy"}, 2)
 
-local minecraft = categoryManager.New("Minecraft")
+local minecraft = categoryManager.New("Minecraft", "easy")
 minecraft:Add("What is the name of the green creature that explodes?", {"Creeper", "Zombie", "Skeleton", "Slime"})
 minecraft:Add("Which tool is best for digging stone and bricks?", {"Pickaxe", "Shovel", "Axe", "Drill"})
 minecraft:Add("What is the name of the dimension where you fight the Ender Dragon?", {"The End", "The Nether", "The Overworld", "The Void"}, 2)
 minecraft:Add("What resource do you need to trade with villagers?", {"Emerald", "Apple", "Gold", "Iron"})
 minecraft:Add("What block can you use to make a portal to the Nether?", {"Obsidian", "Netherrack", "Cobblestone", "Bedrock"})
 
-local chess = categoryManager.New("Chess")
+local chess = categoryManager.New("Chess", "medium")
 chess:Add("What is the name of the piece that can only move diagonally?", {"Bishop", "Knight", "Queen"})
 chess:Add("What is the term for a situation where a king is under attack and cannot escape?", {"Checkmate", "Stalemate", "En passant", "Castling"})
 chess:Add("What is the name of the chess strategy that involves sacrificing a piece to gain an advantage?", {"Gambit", "Fork", "Pin", "Skewer"})
@@ -1010,28 +1010,28 @@ WWI:Add("What was the nickname given to the type of warfare that involved diggin
 WWI:Add("What caused Great Britain to join World War I?", {"German troops marching through Belgium", "German bombing raids on London", "German use of illegal chemicals", "Germans sinking British civilian ships"})
 WWI:Add("What was the name of the alliance between Germany, Austria-Hungary and Italy?", {"Triple Alliance", "The Axis Powers", "The Triple Entente", "The League of Nations"}, 2)
 
-local luau = categoryManager.New("Luau")
+local luau = categoryManager.New("Luau", "hard")
 luau:Add("What is the keyword for defining a function in Luau?", {"function", "def", "local", "sub"})
 luau:Add("What is the syntax for creating a comment in Luau?", {"-- comment", "// comment", "# comment", "' comment"}, 2)
 luau:Add("What is the data type for storing multiple values in Luau?", {"table", "array", "list", "set"})
 luau:Add("How do you declare a table in Luau?", {"local table = {}", "local table = []", "local table = table.new()", "local table = ()"})
 luau:Add("What is the symbol for concatenating strings in Luau?", {"..", "+", "&", "%"}, 2)
 
-local astronomy = categoryManager.New("Astronomy")
+local astronomy = categoryManager.New("Astronomy", "medium")
 astronomy:Add("What is the name of the dwarf planet that was once considered a ninth planet in our solar system?", {"Pluto", "Ceres", "Eris", "Haumea"})
 astronomy:Add("What is the name of the theory that describes how the universe began with a massive expansion from a single point?", {"The Big Bang theory", "The Steady State theory", "The Inflationary theory", "The String theory"})
 astronomy:Add("What is the name of the largest planet in our solar system?", {"Jupiter", "Saturn", "Earth", "Neptune"})
 astronomy:Add("What is the term for a group of stars that form a recognizable pattern?", {"A constellation", "A nebula", "A cluster", "A galaxy"})
 astronomy:Add("What is the name of the largest moon in our solar system?", {"Ganymede", "Titan", "Io", "Europa"}, 2)
 
-local memes = categoryManager.New("Memes")
+local memes = categoryManager.New("Memes", "easy")
 memes:Add("Which meme features a dog sitting in a burning room?", {"This is fine", "Doge", "Grumpy Cat", "Bad Luck Brian"})
 memes:Add("What is the name of the frog character that is often associated with the phrase 'feels good man'?", {"Pepe", "Kermit", "Frogger", "Freddy"}, 2)
 memes:Add("What is the term for a meme that looks low-quality and pixelated?", {"Deep fried", "Dank", "Cringe", "Ironic"})
 memes:Add("Which animal is associated with the 'Doge' meme?", {"Shiba Inu", "Grumpy Cat", "Keyboard Cat", "Nyan Cat"})
 memes:Add("What is the name of the meme featuring a man's head sticking out of a while toilet bowl?", {"Skibidi Toilet", "TF2 Guy", "Fanum Tax", "Smurf Cat"})
 
-local anime = categoryManager.New("Anime")
+local anime = categoryManager.New("Anime", "easy")
 anime:Add("What is the name of the main character in Naruto?", {"Naruto Uzumaki", "Sasuke Uchiha", "Kakashi Hatake", "Itachi Uchiha"})
 anime:Add("What is the name of the pirate crew that Monkey D. Luffy leads in One Piece?", {"Straw Hat Pirates", "Blackbeard Pirates", "Red Hair Pirates", "Whitebeard Pirates"})
 anime:Add("What is the name of the powerful notebook that can kill anyone whose name is written in it in it?", {"Death Note", "Kira Note", "Shinigami Note", "Life Note"})
@@ -1080,7 +1080,7 @@ biology:Add("What is the main function of red blood cells?", {"Oxygen transport"
 biology:Add("What are the four types of macromolecules found in living things?", {"Carbohydrates, proteins, lipids, and nucleic acids", "Glucose, amino acids, fatty acids, and nucleotides", "Starch, enzymes, fats, and DNA", "Sugars, peptides, oils, and RNA"}, 2)
 biology:Add("What is the name of the molecule that carries genetic information in most living organisms?", {"DNA", "Cell", "ATP", "ADP"})
 
-local sayings = categoryManager.New("Sayings and Idioms")
+local sayings = categoryManager.New("Sayings and Idioms", "easy")
 sayings:Add("Which idiom means to reveal a secret?", {"Let the cat out of the bag", "Paint the town red", "Beat around the bush", "Bite the bullet"})
 sayings:Add("What does 'a piece of cake' refer to?", {"Something very easy", "A dessert", "A difficult task", "A small portion"})
 sayings:Add("Which idiom means to be in trouble?", {"In hot water", "On cloud nine", "Under the weather", "Out of the blue"})
@@ -1101,26 +1101,40 @@ internetSlang2:Add("What does 'YOLO' stand for?", {"You Only Live Once", "Your O
 internetSlang2:Add("What does 'OMW' stand for?", {"On My Way", "Oh My Word", "Only Men Welcome", "Official Meme Website"})
 internetSlang2:Add("What is the meaning of 'ITT'?", {"In This Thread", "I'll Tell Them", "I Think That", "I Talked To"}, 2)
 
-local guessTheMovie = categoryManager.New("Guess the Movie")
+local guessTheMovie = categoryManager.New("Guess the Movie", "easy")
 guessTheMovie:Add("Which movie features a young wizard attending the Hogwarts School?", {"Harry Potter and the Philosopher's Stone", "The Lord of the Rings", "The Chronicles of Narnia", "The Wizard of Oz"})
 guessTheMovie:Add("What movie tells the story of a clownfish searching for his son across the ocean?", {"Finding Nemo", "Shark Tale", "The Little Mermaid", "Free Billy"})
 guessTheMovie:Add("Which sci-fi film features blue-skinned aliens called the Na'vi?", {"Avatar", "Star Wars", "Alien", "District 9"})
 guessTheMovie:Add("In what movie does Tom Hanks play a man stranded on an island with only a volleyball for company?", {"Cast Away", "The Terminal", "Forrest Gump", "Saving Private Ryan"}, 2)
 guessTheMovie:Add("What movie tells the story of a group of toys that come to life when humans aren't around?", {"Toy Story", "The Lego Movie", "Small Soldiers", "Wreck-It Ralph"})
 
-local guessTheBook = categoryManager.New("Guess the Book")
+local guessTheBook = categoryManager.New("Guess the Book", "medium")
 guessTheBook:Add("In which book does a young girl named Alice fall down a rabbit hole into a fantastical world?", {"Alice's Adventures in Wonderland", "The Wonderful Wizard of Oz", "Peter Pan", "The Secret Garden"})
 guessTheBook:Add("Which book tells the story of a character named Bilbo Baggins?", {"The Hobbit", "The Lord of the Rings", "The Silmarillion", "Eragon"})
 guessTheBook:Add("In which dystopian novel is the phrase 'Big Brother is watching you' prominent?", {"1984", "Brave New World", "Fahrenheit 451", "The Hunger Games"})
 guessTheBook:Add("Which book tells the story of a boy named Charlie who wins a golden ticket?", {"Charlie and the Chocolate Factory", "Charlie and the Giant Peach", "Wonka's Chocolate Factory", "The BFG"})
 guessTheBook:Add("Which book tells the story of a boy who never grows up and lives in Neverland?", {"Peter Pan", "The Wonderful Wizard of Oz", "Alice in Wonderland", "The Chronicles of Narnia"})
 
-local music = categoryManager.New("Music")
+local music = categoryManager.New("Music", "medium")
 music:Add("Which band released the album 'The Dark Side of the Moon'?", {"Pink Floyd", "The Beatles", "Led Zeppelin", "The Rolling Stones"})
 music:Add("What do you call the words of a song?", {"Lyrics", "Melody", "Harmony", "Rhythm"})
 music:Add("Which of these is not a wind instrument?", {"Violin", "Flute", "Clarinet", "Saxophone"})
 music:Add("What is the national anthem of the United States called?", {"The Star Spangled Banner", "God Save the Queen", "La Marseillaise", "O Canada"})
 music:Add("Which of these is not a type of guitar?", {"Cello", "Acoustic", "Electric", "Bass"}, 2)
+
+local brainrot = categoryManager.New("Brainrot", "easy") -- based on wikiHow's brainrot quiz
+brainrot:Add("What's the word for those strange little men stuck in toilets?", {"Skibidi", "Toilet snakes", "Plumbing gnomes", "Bowl boys"})
+brainrot:Add("Which of these terms refers to taking a bit of your friend's food?", {"Fanum tax", "Treat toll", "Goodie tax", "Snack sneaking"})
+brainrot:Add("Which term describes someone who's a bit of a lone wolf—perhaps even better than an alpha?", {"Sigma", "Omega", "Beta", "Zeta"})
+brainrot:Add("In which U.S. state are wild, strange, unfortunate things most likely to happen, according to the internet?", {"Only in Ohio", "Only in Alaska", "Only in Florida", "Only in Mississippi"})
+brainrot:Add("Which of these people is a football player known for their rizz?", {"Baby Gronk", "Baby Yoda", "Grimace", "Kai Cenat"}, 2)
+
+local brainrot2 = categoryManager.New("Brainrot", "easy")
+brainrot2:Add("What does it mean to be 'cooked'?", {"In a really bad position", "Extremely hungry", "Feeling very tired", "Excited or thrilled"})
+brainrot2:Add("Who is your sunshine?", {"LeBonBon", "Baby Gronk", "Sigma Squidward", "BanBan"})
+brainrot2:Add("Finish the quote: 'Just put the ___ in the bag.'", {"Fries", "Money", "Skibidi", "Rizz"})
+brainrot2:Add("Who is the main enemy of Skibidi Toilet?", {"Cameraman", "Janitor", "Skibidi Sink", "G-Man"}, 2)
+brainrot2:Add("What is the name of the purple McDonad's drink?", {"Grimace Shake", "Sussy Punch", "Blueberry McFlurry", "Expired Shake"})
 
 local categoryTable = {}
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
@@ -1129,11 +1143,16 @@ local function UpdateCategoryTable(categoryName: string, difficulties: table)
     for difficulty, quizzes in difficulties do
         for index, quiz in quizzes do
             local listName
-            if #quizzes > 1 then -- if multiple quizzes exist under the same name, add their category and index at the end to distinguish them
-                listName = categoryName.."-"..difficulty..index -- ex: flags-easy1, flags-easy2
+            -- if multiple quizzes exist in current difficulty, and there are more difficulties, add their difficulty and index at the end to distinguish them
+            if #quizzes > 1 and categories.numberOfDifficulties[categoryName] > 1 then
+                listName = categoryName.."-"..difficulty..index -- ex: flags-easy1, flags-easy2, flags-medium
                 table.insert(categoryTable, listName)
-            elseif categories.numberOfDifficulties[categoryName] > 1 then -- if multiple difficulties exist but only one quiz per difficulty, only add the difficulty at the end
+            elseif categories.numberOfDifficulties[categoryName] > 1 and difficulty ~= "" then -- if multiple difficulties exist but only one quiz in current difficulty, only add the difficulty at the end
                 listName = categoryName.."-"..difficulty -- ex: flags-hard
+                table.insert(categoryTable, listName)
+            -- if multiple quizzes exist under the same category, but all under the same difficulty, only add their index at the end
+            elseif #quizzes > 1 or difficulty == "" then
+                listName = categoryName.."-"..index -- ex: history-1, history-2
                 table.insert(categoryTable, listName)
             else
                 listName = categoryName -- ex: flags
@@ -1161,52 +1180,64 @@ local function SortDifficulty(a, b)
 	end
 end
 
-local function AddToSendCategoryTable(categoryName: string, difficulties: string): string
+local categoriesToSend: { string } = {} -- no suffixes, only category names. format should be: food and drink, flags, science
+-- categoriesToSendDetailed sends if settings.sendDetailedCategorylist is true
+local categoriesToSendDetailed: { string } = {} -- format should be: food and drink, flags [easy, easy2, medium, hard], science [easy, hard]
+
+local function addToSendCategoryTable(categoryName: string, difficulties: string): string
     local formattedCategory = {}
-        local iterator = 0
-        for difficulty, quizzes in difficulties do
-            iterator += 1
-            if #quizzes > 1 then
-                for index, quiz in quizzes do
-                    table.insert(formattedCategory, difficulty..index) -- "easy1, easy2"
-                end
-            elseif categories.numberOfDifficulties[categoryName] > 1 and difficulty == "" then
-                table.insert(formattedCategory, difficulty.."1") -- to make sure that categories without a difficulty also get shown
-            elseif categories.numberOfDifficulties[categoryName] > 1 then
-                table.insert(formattedCategory, difficulty) -- "easy"
+    local iterator = 0
+    for difficulty, quizzes in difficulties do
+        iterator += 1
+        if #quizzes > 1 and categories.numberOfDifficulties[categoryName] > 1 then
+            for index, quiz in quizzes do
+                table.insert(formattedCategory, difficulty..index) -- "easy1, easy2"
             end
+        elseif categories.numberOfDifficulties[categoryName] > 1 and difficulty == "" then
+            table.insert(formattedCategory, difficulty.."1") -- to make sure that categories without a difficulty also get shown
+        elseif categories.numberOfDifficulties[categoryName] > 1 then
+            table.insert(formattedCategory, difficulty) -- "easy"
+        elseif #quizzes > 1 then
+            table.insert(formattedCategory, tostring(#quizzes)) -- "2, 4". simply indicates how many quizzes exist in that cateogry
         end
-        table.sort(formattedCategory, SortDifficulty) -- make sure easy always comes before medium, etc.
-    if #formattedCategory > 1 then
+    end
+    table.sort(formattedCategory, SortDifficulty) -- make sure easy always comes before medium, etc.
+    if #formattedCategory > 0 then
         formattedCategory = categoryName.." ["..table.concat(formattedCategory, ", ").."]"
     else
         formattedCategory = categoryName
     end
-    return formattedCategory
+    table.insert(categoriesToSendDetailed, formattedCategory)
+    table.insert(categoriesToSend, categoryName)
 end
 
-local categoriesToSend = {} -- format should be: food and drink, flags [easy, easy2, medium, hard], science [easy, hard]
 for categoryName, difficulties in categories.categoryList do -- indexing categories for sending with sendCategories() function
-    table.insert(categoriesToSend, AddToSendCategoryTable(categoryName, difficulties))
+    addToSendCategoryTable(categoryName, difficulties)
 end
 table.sort(categoriesToSend)
+table.sort(categoriesToSendDetailed)
 
 local firstTimeSendingCategories = true -- Roblox often filters the category table the first time you try to send it
 local currentlySending: string? -- gives alert in this format: "[currentlySending] currently being sent"
 local function sendCategories()
     if not quizRunning and not currentlySending then
         currentlySending = "Category list is"
-        if firstTimeSendingCategories then
-            notify("Warning: possible filtering", "If the category list gets filtered the first time, try resending it after running a quiz")
+        local waitTime = 5
+        if firstTimeSendingCategories and settings.sendDetailedCategorylist then
+            notify("Warning: possible filtering", "Turn off detailed categories in settings if the category list gets filtered")
+            waitTime = 7
         end
         Chat("❓ | Quiz topics:")
         task.wait(3)
-        local waitTime = 5
-        if firstTimeSendingCategories then
-            waitTime = 7
+        -- only use the clear filter option when detailed leaderboards are on (more prone to filtering)
+        if settings.sendDetailedCategorylist then
+            splitIntoMessages(categoriesToSendDetailed, ", ", true, waitTime)
+        else
+            splitIntoMessages(categoriesToSend, ", ", false, waitTime)
         end
-        SplitIntoMessages(categoriesToSend, ", ", true, waitTime)
-        firstTimeSendingCategories = false
+        if settings.sendDetailedCategorylist then
+            firstTimeSendingCategories = false
+        end
         currentlySending = nil
     elseif currentlySending then
         notify(`{currentlySending} currently being sent`, "Wait for it to finish sending before sending the category list")
@@ -1236,10 +1267,12 @@ end
 
 local categoryDropdown
 local function UpdateCategory(categoryName: string) -- reindexes the specified category
-    categoriesToSend = RemoveDuplicateCategories(categoriesToSend, categoryName, " [")
+    categoriesToSend = RemoveDuplicateCategories(categoriesToSend, categoryName, "")
+    categoriesToSendDetailed = RemoveDuplicateCategories(categoriesToSendDetailed, categoryName, " [")
     local difficulties = categories.categoryList[categoryName]
-    table.insert(categoriesToSend, AddToSendCategoryTable(categoryName, difficulties))
+    addToSendCategoryTable(categoryName, difficulties)
     table.sort(categoriesToSend)
+    table.sort(categoriesToSendDetailed)
     categoryTable = RemoveDuplicateCategories(categoryTable, categoryName, "-")
     UpdateCategoryTable(categoryName, difficulties)
     table.sort(categoryTable)
@@ -1523,11 +1556,11 @@ local function sendRules()
     if mode == "Quiz" then
         Chat("📜 | Quiz mode rules:")
         task.wait(2)
-        SplitIntoMessages(quizModeRules, " ")
+        splitIntoMessages(quizModeRules, " ")
     elseif mode == "Kahoot" then
         Chat("📜 | Kahoot mode rules:")
         task.wait(2)
-        SplitIntoMessages(kahootModeRules, " ")
+        splitIntoMessages(kahootModeRules, " ")
     end
     currentlySending = nil
 end
@@ -1909,8 +1942,16 @@ settingsTab:CreateToggle({
         EnableAntiAfk()
     end
 })
-local dropdownAutoplayFilter = table.clone(difficultyOrder)
-dropdownAutoplayFilter[1] = "Missing difficulty" -- replace "" with "Missing difficulty" to prevent confusion
+local dropdownAutoplayFilter: { string } = {}
+-- only include difficulties which include categories
+for _, difficulty: string in difficultyOrder do
+    if numberOfCategoriesPerDifficulty[difficulty] and numberOfCategoriesPerDifficulty[difficulty] > 0 then
+        if difficulty == "" then -- replace "" with "Missing difficulty" to prevent confusion
+            difficulty = "Missing difficulty"
+        end
+        table.insert(dropdownAutoplayFilter, difficulty)
+    end
+end
 settingsTab:CreateDropdown({
     Name = "Autoplay filter (unselect all to disable filter)",
     Options = dropdownAutoplayFilter,
@@ -2000,6 +2041,13 @@ settingsTab:CreateToggle({
         else
             notify("Can't repeat tagged", "This game uses an unsupported chat system")
         end
+    end
+})
+settingsTab:CreateToggle({
+    Name = "Send detailed category list in chat (may get tagged)",
+    CurrentValue = settings.sendDetailedCategorylist,
+    Callback = function(value)
+        settings.sendDetailedCategorylist = value
     end
 })
 if boothGame then
