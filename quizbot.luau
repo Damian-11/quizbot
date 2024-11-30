@@ -1,4 +1,4 @@
-local VERSION = "2.4.0"
+local VERSION = "2.4.1"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -844,7 +844,7 @@ science:Add("What is cooling lava called?", {"Igneous rocks", "Magma", "Fossils"
 
 local science2 = categoryManager.New("Science", "medium")
 science2:Add("What is faster, sound or light?", {"Light", "Sound", "They travel at the same speed", "They don't move"})
-science2:Add("Which of these is not one of Newton's laws of motion?", {"Objects at rest stay in motion", "Force equals mass times acceleration", "Every action has an equal and opposite reaction", "An object in motion stays in motion"})
+science2:Add("Which of these is NOT one of Newton's laws of motion?", {"Objects at rest stay in motion", "Force equals mass times acceleration", "Every action has an equal and opposite reaction", "An object in motion stays in motion"})
 science2:Add("Who developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo"})
 science2:Add("Which of these is not a state of matter?", {"Energy", "Solid", "Liquid", "Gas"})
 science2:Add("What is the powerhouse of the cell?", {"Mitochondria", "Nucleus", "Cytoplasm", "Nucleic membrane"}, 2)
@@ -906,11 +906,11 @@ capitalsHard:Add("What is the capital city of Australia?", {"Canberra", "Sydney"
 capitalsHard:Add("What is the capital city of New Zealand?", {"Wellington", "Auckland", "Hamilton"})
 
 local geography = categoryManager.New("Geography", "easy")
-geography:Add("Which river flows through London?", {"River Thames", "River Severn", "River Trent"})
-geography:Add("On which continent is the Sahara Desert located?", {"Africa", "Asia", "Europe"})
+geography:Add("On which continent is the Sahara Desert located?", {"Africa", "Asia", "Europe", "South America"})
+geography:Add("Which river flows through London?", {"River Thames", "River Severn", "River Trent", "The Nile"})
 geography:Add("Which of these cities is NOT a national capital?", {"Sydney", "Oslo", "Wellington", "Bangkok"}, 2)
 geography:Add("Which of these continents has the largest land area?", {"Asia", "Africa", "Europe", "South America"})
-geography:Add("What is the smallest country in the world?", {"Vatican City", "Belgium", "Luxembourd"})
+geography:Add("What is the smallest country in the world?", {"Vatican City", "Belgium", "Luxembourg", "Hungary"})
 
 local geographyMedium = categoryManager.New("Geography", "medium")
 geographyMedium:Add("Which island is the largest in the world?", {"Greenland", "Madagascar", "Borneo", "New Guinea"})
@@ -1032,11 +1032,11 @@ memes:Add("Which animal is associated with the 'Doge' meme?", {"Shiba Inu", "Gru
 memes:Add("What is the name of the meme featuring a man's head sticking out of a while toilet bowl?", {"Skibidi Toilet", "TF2 Guy", "Fanum Tax", "Smurf Cat"})
 
 local anime = categoryManager.New("Anime", "easy")
-anime:Add("What is the name of the main character in Naruto?", {"Naruto Uzumaki", "Sasuke Uchiha", "Kakashi Hatake", "Itachi Uchiha"})
+anime:Add("What is the name of the main character in Naruto?", {"Naruto Uzumaki", "Naruto Uchiha", "Kakashi Naruto", "Itachi Uchiha"})
 anime:Add("What is the name of the pirate crew that Monkey D. Luffy leads in One Piece?", {"Straw Hat Pirates", "Blackbeard Pirates", "Red Hair Pirates", "Whitebeard Pirates"})
 anime:Add("What is the name of the powerful notebook that can kill anyone whose name is written in it in it?", {"Death Note", "Kira Note", "Shinigami Note", "Life Note"})
-anime:Add("What is the main character's power in 'My Hero Academia'?", {"One For All", "All For One", "Half-Cold Half-Hot", "Explosion"}, 2)
-anime:Add("What is the name of the forest spirit that Satsuki and Mei befriend in My Neighbor Totoro?", {"Totoro", "Catbus", "Kodama", "Makkuro Kurosuke"})
+anime:Add("In Death Note, how does Light Yagami first discover the infamous notebook?", {"He sees it fall from the sky", "He receives it as a gift from a friend", "It is delivered to him in a mysterious box", "He finds it on the subway"}, 2)
+anime:Add("What is the name of the main character in the Pokémon series?", {"Ash Ketchum", "Naruto Uzumaki", "Gary Oak", "Pikachu"})
 
 local scienceHard = categoryManager.New("Science", "hard")
 scienceHard:Add("What is the name of the largest bone in the human body?", {"Femur", "Humerus", "Tibia", "Pelvis"})
@@ -1265,7 +1265,7 @@ local function RemoveDuplicateCategories(targetTable: table, categoryName: strin
     return tempTable
 end
 
-local categoryDropdown
+local categoryDropdvown
 local function UpdateCategory(categoryName: string) -- reindexes the specified category
     categoriesToSend = RemoveDuplicateCategories(categoriesToSend, categoryName, "")
     categoriesToSendDetailed = RemoveDuplicateCategories(categoriesToSendDetailed, categoryName, " [")
@@ -1279,15 +1279,35 @@ local function UpdateCategory(categoryName: string) -- reindexes the specified c
     categoryDropdown:Refresh(categoryTable)
 end
 
+local numberOfCategoriesPerDifficulty = {}
+for categoryName, category in categoryLookupTable do -- find how many categories are in each difficulty group. Needed so autoplay knows when it's out of categories
+    if not numberOfCategoriesPerDifficulty[category[2]] then
+        numberOfCategoriesPerDifficulty[category[2]] = 1
+    else
+        numberOfCategoriesPerDifficulty[category[2]] += 1
+    end
+end
 ------------- Custom question OOP -------------
 local CustomCategoryManager = {}
 CustomCategoryManager.__index = CustomCategoryManager
 local categoryNames = {}
 
+local autoplayFilterDifficulties: { string } = {} -- array of difficulties that'll show up on the autoplay filter dropdown
+local autoplayFilterDropdown
 function CustomCategoryManager.New(categoryName: string, difficulty: string?)
     if type(categoryName) == "string" then
-        if not type(difficulty) == "string" then
+        if type(difficulty) ~= "string" then
             difficulty = "" -- if difficulty is not a string, use default (blank)
+        end
+        -- if brand new category is added, add it to the filter dropdown
+        if not numberOfCategoriesPerDifficulty[difficulty] or numberOfCategoriesPerDifficulty[difficulty] == 0 then
+            numberOfCategoriesPerDifficulty[difficulty] = 1
+            if difficulty == "" then
+                 table.insert(autoplayFilterDifficulties, "missing difficulty")
+            else
+                table.insert(autoplayFilterDifficulties, difficulty)
+            end
+            autoplayFilterDropdown:Refresh(autoplayFilterDifficulties)
         end
         local newCategory = setmetatable(categoryManager.New(categoryName, difficulty), CustomCategoryManager)
         categoryNames[newCategory] = categoryName
@@ -1422,15 +1442,7 @@ UpdateUILeaderboard = function(type: string) -- updates the labels for the leade
 end
 
 local autoplayChosenCategories = {} -- categories previously chosen by autoplay
-local numberOfCategoriesPerDifficulty = {}
 local autoPlayDifficulties = difficultyOrder -- allowed difficulties by autoplay. Default is all difficulties
-for categoryName, category in categoryLookupTable do -- find how many categories are in each difficulty group. Needed so autoplay knows when it's out of categories
-    if not numberOfCategoriesPerDifficulty[category[2]] then
-        numberOfCategoriesPerDifficulty[category[2]] = 1
-    else
-        numberOfCategoriesPerDifficulty[category[2]] += 1
-    end
-end
 local function choseAutoplayCategory()
     local autoplayComplete = true -- true if every category has been played
     for _, difficulty in autoPlayDifficulties do -- do this each time in case the user changes the autoplay filter
@@ -1942,26 +1954,26 @@ settingsTab:CreateToggle({
         EnableAntiAfk()
     end
 })
-local dropdownAutoplayFilter: { string } = {}
+
 -- only include difficulties which include categories
 for _, difficulty: string in difficultyOrder do
     if numberOfCategoriesPerDifficulty[difficulty] and numberOfCategoriesPerDifficulty[difficulty] > 0 then
-        if difficulty == "" then -- replace "" with "Missing difficulty" to prevent confusion
-            difficulty = "Missing difficulty"
+        if difficulty == "" then -- replace "" with "missing difficulty" to prevent confusion
+            difficulty = "missing difficulty"
         end
-        table.insert(dropdownAutoplayFilter, difficulty)
+        table.insert(autoplayFilterDifficulties, difficulty)
     end
 end
-settingsTab:CreateDropdown({
+autoplayFilterDropdown = settingsTab:CreateDropdown({
     Name = "Autoplay filter (unselect all to disable filter)",
-    Options = dropdownAutoplayFilter,
+    Options = autoplayFilterDifficulties,
     MultipleOptions = true,
     Callback = function(options)
         local filteredTable = table.clone(options) -- since tables are passed by value (mutable), they need to be cloned to prevent modifying the original table
         if #options == 0 then -- if none selected, select all
             filteredTable = difficultyOrder
-        elseif table.find(filteredTable, "Missing difficulty") then
-            filteredTable[table.find(filteredTable, "Missing difficulty")] = ""
+        elseif table.find(filteredTable, "missing difficulty") then
+            filteredTable[table.find(filteredTable, "missing difficulty")] = ""
         end
         autoPlayDifficulties = filteredTable
     end
