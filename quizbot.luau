@@ -235,11 +235,11 @@ local function UpdateSignText(text: string)
     if not boothGame or not settings.signStatus or not text then -- only works in "booth game"
         return
     end
-    local sign = localPlayer.Character:FindFirstChild("TextSign") or localPlayer.Backpack:FindFirstChild("TextSign")
+    local sign = localPlayer.Character:FindFirstChild("Text Sign") or localPlayer.Backpack:FindFirstChild("Text Sign")
     if not sign then
         return
     end
-    signRemote:FireServer({"SignServer"})
+    signRemote:FireServer("SignServer")
     changeSignTextRemote:FireServer(text)
 end
 
