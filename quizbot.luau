@@ -1,4 +1,4 @@
-local VERSION = "2.4.1"
+local VERSION = "2.4.2"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -220,7 +220,7 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
     importantMessageSent = false
 end
 
--- Booth Game integration is currently broken. I won't bother fixing it every time they update the remote events
+-- Booth Game integration may break at any point. I won't bother fixing it every time they update the remote events
 local boothGame = false
 local signRemote
 local changeSignTextRemote
@@ -1663,7 +1663,7 @@ if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
     ContextActionService:SetImage("ToggleUI", "rbxassetid://100698995249426")
 end
 
-local mainTab = window:CreateTab("Main", 81072774414061)
+local mainTab = window:CreateTab("Main", 74002778429106)
 
 if outdated and not getDataFileValue("disableVersionAlert") then
     mainTab:CreateSection("Outdated version warning")
@@ -1734,7 +1734,7 @@ mainTab:CreateButton({
     end
 })
 
-local leaderboardTab = window:CreateTab("Leaderborad", 118001929385447)
+local leaderboardTab = window:CreateTab("Leaderborad", 97885193604839)
 leaderboardTab:CreateSection("Server leaderboard (doesn't reset)")
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
@@ -1763,7 +1763,7 @@ leaderboardTab:CreateButton({
     Callback = pointManager.ResetAllPoints
 })
 
-local playerControlTab = window:CreateTab("Player controls", 126813390527582)
+local playerControlTab = window:CreateTab("Player controls", 100068360107422)
 local targetPlayer
 local targetPlayerLabel
 playerControlTab:CreateSection("Select target")
@@ -1915,7 +1915,7 @@ playerControlTab:CreateButton({
     end
 })
 
-local settingsTab = window:CreateTab("Settings", 124411316797456)
+local settingsTab = window:CreateTab("Settings", 112502172419483)
 settingsTab:CreateSection("Discord server")
 settingsTab:CreateLabel("Join my Discord server: discord.gg/wm384KFFMC")
 settingsTab:CreateButton({
