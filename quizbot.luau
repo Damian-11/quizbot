@@ -1,4 +1,4 @@
-local VERSION = "2.4.2"
+local VERSION = "2.4.3"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -139,6 +139,7 @@ end
 
 local function writeToDataFile(key: string, value: dataValueType)
     if not writefile then
+        notify("Can't write to file", "Your exploit does not support the writefile function. Your settings will not be saved.")
         return
     end
     data[key] = value
@@ -1279,7 +1280,7 @@ local function UpdateCategory(categoryName: string) -- reindexes the specified c
     categoryDropdown:Refresh(categoryTable)
 end
 
-local numberOfCategoriesPerDifficulty = {}
+local numberOfCategoriesPerDifficulty: { number } = {}
 for categoryName, category in categoryLookupTable do -- find how many categories are in each difficulty group. Needed so autoplay knows when it's out of categories
     if not numberOfCategoriesPerDifficulty[category[2]] then
         numberOfCategoriesPerDifficulty[category[2]] = 1
@@ -1386,12 +1387,7 @@ local function sendLeaderboard(type: string, message: string, triggeredByUser: b
             local username = pointsArray[i][1]
             local displayName = getDisplayNameByUsername(username) or "" -- set to empty string in case user left during quiz
             local points = roundNumber(pointsArray[i][2], 1)
-            local pointWord
-            if points > 1 then
-                pointWord = "points"
-            else
-                pointWord = "point"
-            end
+            local pointWord = if points > 1 then "points" else "point"
             task.wait(2.5)
             if triggeredByUser and quizRunning then
                 return
@@ -1414,12 +1410,7 @@ local function GetPointsAndUpdateLabels(type: string)
             local username = pointsArray[index][1]
             local displayName = getDisplayNameByUsername(username)
             local points = roundNumber(pointsArray[index][2], 1)
-            local pointWord
-            if points > 1 then
-                pointWord = "points"
-            else
-                pointWord = "point"
-            end
+            local pointWord = if points > 1 then "points" else "point"
             label:Set(medalEmojis[index]..displayName.." (@"..username..") - "..points.." "..pointWord)
         end
     end
@@ -1449,7 +1440,8 @@ local function choseAutoplayCategory()
         if autoplayChosenCategories[difficulty] and not #autoplayChosenCategories[difficulty] == numberOfCategoriesPerDifficulty[difficulty] then
             autoplayComplete = false
             break
-        elseif not autoplayChosenCategories[difficulty] then -- if the difficulty has not been chosen yet at all
+        -- if the difficulty has not been chosen yet at all or there are no quizzes in it
+        elseif not autoplayChosenCategories[difficulty] and numberOfCategoriesPerDifficulty[difficulty] then
             autoplayComplete = false
             break
         end
@@ -1638,6 +1630,7 @@ local success, errorMessage = pcall(function()
         LoadingTitle = "Loading quizbot...",
         LoadingSubtitle = "made by Damian11 AKA Quizzer",
         DisableRayfieldPrompts = true,
+        DisableBuildWarnings = true,
     })
 end)
 if not success then -- if the libary is down for any reason, ask user to report it on discord
@@ -1734,7 +1727,7 @@ mainTab:CreateButton({
     end
 })
 
-local leaderboardTab = window:CreateTab("Leaderborad", 97885193604839)
+local leaderboardTab = window:CreateTab("Leaderboard", 97885193604839)
 leaderboardTab:CreateSection("Server leaderboard (doesn't reset)")
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
