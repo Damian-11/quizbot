@@ -1,4 +1,4 @@
-local VERSION = "2.4.4"
+local VERSION = "2.4.6"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -39,6 +39,7 @@ local settings = {
     autoplay = false,
     repeatTagged = true,
     sendDetailedCategorylist = false, -- off by default since sending it this way tends to trigger the filter. Blame Roblox
+    removeLeavingPlayersFromLB = true,
 }
 
 local numberMap = {
@@ -449,18 +450,24 @@ function categoryManager:Add(quesitonText: string, options: { string }, value: n
     table.insert(self, newQuestion)
 end
 
+local function getDisplayNameByUsername(username)
+    local displayName = players:FindFirstChild(username) and players:FindFirstChild(username).DisplayName
+    return displayName
+end
+
 --- Points OOP ---
 local pointManager = {}
 local userPoints = {}
-pointManager.__index = pointManager
 local UpdateUILeaderboard, ClearLeaderboardLabels -- defined later
 
 function pointManager.NewAccount(player)
     userPoints[player.Name] = {}
     local playerPoints = userPoints[player.Name]
+    -- Save displayname when creating an account to preserve it when the user leaves the game
+    -- This is needed when settings.removeLeavingPlayersFromLB is false
+    playerPoints.DisplayName = getDisplayNameByUsername(player.Name)
     playerPoints.GlobalPoints = 0
     playerPoints.CurrentQuizPoints = 0
-    setmetatable(playerPoints, pointManager)
     return playerPoints
 end
 
@@ -614,7 +621,7 @@ local function startChatListening(message: string, player: Player)
             end
         elseif mode == "Quiz" then
             if awaitingAnswer then
-                requestSendMessage("❌ | "..player.DisplayName.." wrong answer. Try again in "..tostring(settings.userCooldown).." seconds")
+                requestSendMessage("❌ | "..player.DisplayName.." wrong answer. Try again in "..tostring(settings.userCooldown).." seconds.")
             end
             table.insert(userCooldowns, player.Name)
             task.delay(settings.userCooldown, function()
@@ -1114,7 +1121,7 @@ guessTheMovie:Add("In what movie does Tom Hanks play a man stranded on an island
 guessTheMovie:Add("What movie tells the story of a group of toys that come to life when humans aren't around?", {"Toy Story", "The Lego Movie", "Small Soldiers", "Wreck-It Ralph"})
 
 local guessTheBook = categoryManager.New("Guess the Book", "medium")
-guessTheBook:Add("In which book does a young girl named Alice fall down a rabbit hole into a fantastical world?", {"Alice's Adventures in Wonderland", "The Wonderful Wizard of Oz", "Peter Pan", "The Secret Garden"})
+guessTheBook:Add("In which book does a young girl named Alice fall down a rabbit hole into a fantastical world?", {"Alice in Wonderland", "The Wonderful Wizard of Oz", "Peter Pan", "The Secret Garden"})
 guessTheBook:Add("Which book tells the story of a character named Bilbo Baggins?", {"The Hobbit", "The Lord of the Rings", "The Silmarillion", "Eragon"})
 guessTheBook:Add("In which dystopian novel is the phrase 'Big Brother is watching you' prominent?", {"1984", "Brave New World", "Fahrenheit 451", "The Hunger Games"})
 guessTheBook:Add("Which book tells the story of a boy named Charlie who wins a golden ticket?", {"Charlie and the Chocolate Factory", "Charlie and the Giant Peach", "Wonka's Chocolate Factory", "The BFG"})
@@ -1346,15 +1353,10 @@ function CustomCategoryManager:Add(quesitonText: string, options: { string }, va
     notify("Can't add custom question", "See the output for more information")
 end
 
-local function getDisplayNameByUsername(username)
-    local displayName = players:FindFirstChild(username) and players:FindFirstChild(username).DisplayName
-    return displayName
-end
-
 local function sortUserPoints(type)
     local array = {}
-    for key, value in pairs(userPoints) do
-        array[#array+1] = {key, value[type]}
+    for username, value in pairs(userPoints) do
+        array[#array+1] = {username, value[type], value.DisplayName}
     end
     table.sort(array, function(a, b)
         return a[2] > b[2]
@@ -1389,7 +1391,7 @@ local function sendLeaderboard(type: string, message: string, triggeredByUser: b
                 Chat(message..type.." leaderboard:")
             end
             local username = pointsArray[i][1]
-            local displayName = getDisplayNameByUsername(username) or "" -- set to empty string in case user left during quiz
+            local displayName = pointsArray[i][3]
             local points = roundNumber(pointsArray[i][2], 1)
             local pointWord = if points > 1 then "points" else "point"
             task.wait(2.5)
@@ -1412,7 +1414,7 @@ local function GetPointsAndUpdateLabels(type: string)
     for index, label in leaderboardLabels[type] do
         if pointsArray[index] and pointsArray[index][2] > 0 then
             local username = pointsArray[index][1]
-            local displayName = getDisplayNameByUsername(username)
+            local displayName = pointsArray[index][3]
             local points = roundNumber(pointsArray[index][2], 1)
             local pointWord = if points > 1 then "points" else "point"
             label:Set(medalEmojis[index]..displayName.." (@"..username..") - "..points.." "..pointWord)
@@ -1573,8 +1575,10 @@ local function sendRules()
     currentlySending = nil
 end
 
-game:GetService("Players").PlayerRemoving:Connect(function(player) -- remove player's userpoint account on leave
-    pointManager.RemoveAccount(player)
+players.PlayerRemoving:Connect(function(player) -- remove player's userpoint account on leave
+    if settings.removeLeavingPlayersFromLB then
+        pointManager.RemoveAccount(player)
+    end
 end)
 
 local function getPlayerByPlayerName(name)
@@ -1732,6 +1736,50 @@ mainTab:CreateButton({
     end
 })
 
+mainTab:CreateSection("Autoplay")
+mainTab:CreateToggle({
+    Name = "Autoplay quizzes automatically",
+    CurrentValue = settings.autoplay,
+    Callback = function(value)
+        settings.autoplay = value
+        EnableAntiAfk()
+    end
+})
+
+-- only include difficulties which include categories
+for _, difficulty: string in difficultyOrder do
+    if numberOfCategoriesPerDifficulty[difficulty] and numberOfCategoriesPerDifficulty[difficulty] > 0 then
+        if difficulty == "" then -- replace "" with "missing difficulty" to prevent confusion
+            difficulty = "missing difficulty"
+        end
+        table.insert(autoplayFilterDifficulties, difficulty)
+    end
+end
+autoplayFilterDropdown = mainTab:CreateDropdown({
+    Name = "Autoplay filter (unselect all to disable filter)",
+    Options = autoplayFilterDifficulties,
+    MultipleOptions = true,
+    Callback = function(options)
+        local filteredTable = table.clone(options) -- since tables are passed by value (mutable), they need to be cloned to prevent modifying the original table
+        if #options == 0 then -- if none selected, select all
+            filteredTable = difficultyOrder
+        elseif table.find(filteredTable, "missing difficulty") then
+            filteredTable[table.find(filteredTable, "missing difficulty")] = ""
+        end
+        autoPlayDifficulties = filteredTable
+    end
+})
+mainTab:CreateButton({
+    Name = "Play random quiz",
+    Callback = function()
+        if isFreeToRunQuiz() then
+            local chosenCategory = choseAutoplayCategory()
+            notify("Random quiz chosen", `Starting {chosenCategory} quiz`)
+            startQuiz(chosenCategory)
+        end
+    end
+})
+
 local leaderboardTab = window:CreateTab("Leaderboard", 97885193604839)
 leaderboardTab:CreateSection("Server leaderboard (doesn't reset)")
 table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
@@ -1798,10 +1846,11 @@ playerControlTab:CreateInput({
         end
     end
 })
-local pointsType: string
+local pointsType = "Server points" -- Server points by default
 playerControlTab:CreateDropdown({
     Name = "Apply as",
     Options = {"Server points", "Current quiz points"},
+    CurrentOption = pointsType,
     Callback = function(option)
         pointsType = option[1]
     end
@@ -1943,50 +1992,6 @@ settingsTab:CreateButton({
     Callback = sendRules
 })
 
-settingsTab:CreateSection("Autoplay")
-settingsTab:CreateToggle({
-    Name = "Autoplay quizzes automatically",
-    CurrentValue = settings.autoplay,
-    Callback = function(value)
-        settings.autoplay = value
-        EnableAntiAfk()
-    end
-})
-
--- only include difficulties which include categories
-for _, difficulty: string in difficultyOrder do
-    if numberOfCategoriesPerDifficulty[difficulty] and numberOfCategoriesPerDifficulty[difficulty] > 0 then
-        if difficulty == "" then -- replace "" with "missing difficulty" to prevent confusion
-            difficulty = "missing difficulty"
-        end
-        table.insert(autoplayFilterDifficulties, difficulty)
-    end
-end
-autoplayFilterDropdown = settingsTab:CreateDropdown({
-    Name = "Autoplay filter (unselect all to disable filter)",
-    Options = autoplayFilterDifficulties,
-    MultipleOptions = true,
-    Callback = function(options)
-        local filteredTable = table.clone(options) -- since tables are passed by value (mutable), they need to be cloned to prevent modifying the original table
-        if #options == 0 then -- if none selected, select all
-            filteredTable = difficultyOrder
-        elseif table.find(filteredTable, "missing difficulty") then
-            filteredTable[table.find(filteredTable, "missing difficulty")] = ""
-        end
-        autoPlayDifficulties = filteredTable
-    end
-})
-settingsTab:CreateButton({
-    Name = "Play random quiz",
-    Callback = function()
-        if isFreeToRunQuiz() then
-            local chosenCategory = choseAutoplayCategory()
-            notify("Random quiz chosen", `Starting {chosenCategory} quiz`)
-            startQuiz(chosenCategory)
-        end
-    end
-})
-
 settingsTab:CreateSection("Time settings")
 settingsTab:CreateInput({
     Name = "Question timeout",
@@ -2008,8 +2013,16 @@ settingsTab:CreateInput({
 })
 
 settingsTab:CreateSection("Leaderboard settings")
+
+settingsTab:CreateToggle({
+    Name = "Remove leaving players from leaderboard",
+    CurrentValue = settings.removeLeavingPlayersFromLB,
+    Callback = function(value)
+        settings.removeLeavingPlayersFromLB = value
+    end
+})
 settingsTab:CreateInput({
-    Name = "Send current quiz LB after # of questions",
+    Name = "Send current quiz leaderboard every X questions",
     PlaceholderText = settings.sendLeaderBoardAfterQuestions,
     Callback = function(value)
         if value and tonumber(value) then
@@ -2020,23 +2033,49 @@ settingsTab:CreateInput({
         end
     end
 })
-settingsTab:CreateToggle({
+
+settingsTab:CreateDivider()
+-- This toggles both disable leaderboard toggles to the "on" position when the disable both leaderboards switch is toggled on
+-- When it is toggled back off, the leaderboard toggles are returned back to their previous positions
+local disableBothLeaderboardsToggle, disableCurrentLeaderboardToggle, disableServerLeaderboardToggle
+local originalSettings: { boolean } = {not settings.automaticCurrentQuizLeaderboard, not settings.automaticServerQuizLeaderboard}
+disableBothLeaderboardsToggle = settingsTab:CreateToggle({
     Name = "Disable automatic sending of both leaderboards",
+    CurrentValue = not settings.automaticLeaderboards,
     Callback = function(value)
         settings.automaticLeaderboards = not value
+        if value then
+            -- Save current toggle positions
+            originalSettings = {not settings.automaticCurrentQuizLeaderboard, not settings.automaticServerQuizLeaderboard}
+            disableCurrentLeaderboardToggle:Set(true)
+            disableServerLeaderboardToggle:Set(true)
+        else
+            disableCurrentLeaderboardToggle:Set(originalSettings[1])
+            disableServerLeaderboardToggle:Set(originalSettings[2])
+        end
     end
 })
-settingsTab:CreateToggle({
+disableCurrentLeaderboardToggle = settingsTab:CreateToggle({
     Name = "Disable automatic sending of current quiz LB",
-    CurrentValue = not settings.automaticCurrentQuizLeaderboard,
+    CurrentValue = not settings.automaticCurrentQuizLeaderboard or not settings.automaticLeaderboards,
     Callback = function(value)
+        if value == false and settings.automaticLeaderboards == false then
+            originalSettings = {false, not settings.automaticServerQuizLeaderboard}
+            settings.automaticLeaderboards = true
+            disableBothLeaderboardsToggle:Set(false) -- The toggle's callback gets called when using :Set()
+        end
         settings.automaticCurrentQuizLeaderboard = not value
     end
 })
-settingsTab:CreateToggle({
+disableServerLeaderboardToggle = settingsTab:CreateToggle({
     Name = "Disable automatic sending of server LB",
-    CurrentValue = not settings.automaticServerQuizLeaderboard,
+    CurrentValue = not settings.automaticServerQuizLeaderboard or not settings.automaticLeaderboards,
     Callback = function(value)
+        if value == false and settings.automaticLeaderboards == false then
+            originalSettings = {not settings.automaticCurrentQuizLeaderboard, false}
+            settings.automaticLeaderboards = true
+            disableBothLeaderboardsToggle:Set(false)
+        end
         settings.automaticServerQuizLeaderboard = not value
     end
 })
