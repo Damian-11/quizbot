@@ -1,4 +1,4 @@
-local VERSION = "2.4.3"
+local VERSION = "2.4.4"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
