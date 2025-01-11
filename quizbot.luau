@@ -117,13 +117,17 @@ local function notify(title: string, text: string, configTable: { any }?, durati
     end
 end
 
-if getgenv().QUIZBOT_RUNNING then
+local function setgenv(key: string, value: any)
+    pcall(function()
+        getgenv()[key] = value
+    end)
+end
+
+if getgenv and getgenv().QUIZBOT_RUNNING then
     notify("quizbot is already running", "You cannot run two instances of quizbot at once")
     return
 end
-pcall(function()
-    getgenv().QUIZBOT_RUNNING = true
-end)
+setgenv("QUIZBOT_RUNNING", true)
 
 local function copyLatestScript() -- copies latest loadstring version of the script to clipboard
     setclipboard('loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()')
@@ -132,7 +136,7 @@ end
 
 local DATA_FILENAME = "quizbot_data.json"
 type dataValueType = string | number | boolean
-local data = {} :: {[string]: dataValueType}
+local data: {[string]: dataValueType} = {}
 if isfile and isfile(DATA_FILENAME) then
     data = HttpService:JSONDecode(readfile(DATA_FILENAME))
 end
@@ -882,7 +886,7 @@ local trivia2 = categoryManager.New("Trivia", "medium")
 trivia2:Add("Which animal is the national emblem of Australia?", {"Kangaroo", "Koala", "Emu", "Platypus"})
 trivia2:Add("What does the Richter scale measure?", {"Earthquake intensity", "Wind Speed", "Temperature", "Tornado Strength"}, 2)
 trivia2:Add("Which currency is used in Japan?", {"Yen", "Dollar", "Euro", "Pound"})
-trivia2:Add("Which famous scientist developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo Galilei", "Charles Darwin"})
+trivia2:Add("Which famous scientist developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo Galilei", "Thomas Edison"})
 trivia2:Add("In sport, what does the term PGA refer to?", {"Professional Golfers Association", "Par Golfing Average", "Playing Golf Average", "Part-Time Golfing Amaterurs"})
 
 local guessTheLanguage = categoryManager.New("Guess the language", "medium")
@@ -910,7 +914,7 @@ local geography = categoryManager.New("Geography", "easy")
 geography:Add("On which continent is the Sahara Desert located?", {"Africa", "Asia", "Europe", "South America"})
 geography:Add("Which river flows through London?", {"River Thames", "River Severn", "River Trent", "The Nile"})
 geography:Add("Which of these cities is NOT a national capital?", {"Sydney", "Oslo", "Wellington", "Bangkok"}, 2)
-geography:Add("Which of these continents has the largest land area?", {"Asia", "Africa", "Europe", "South America"})
+geography:Add("Which continent has the largest land area?", {"Asia", "Africa", "Europe", "South America"})
 geography:Add("What is the smallest country in the world?", {"Vatican City", "Belgium", "Luxembourg", "Hungary"})
 
 local geographyMedium = categoryManager.New("Geography", "medium")
@@ -1266,7 +1270,7 @@ local function RemoveDuplicateCategories(targetTable: table, categoryName: strin
     return tempTable
 end
 
-local categoryDropdvown
+local categoryDropdown
 local function UpdateCategory(categoryName: string) -- reindexes the specified category
     categoriesToSend = RemoveDuplicateCategories(categoriesToSend, categoryName, "")
     categoriesToSendDetailed = RemoveDuplicateCategories(categoriesToSendDetailed, categoryName, " [")
@@ -1505,7 +1509,7 @@ local function startQuiz(category: string)
             loopIterations = 0
         end
     end
-    task.wait(3)
+    task.wait(2)
     if loopIterations ~= 0 and settings.automaticLeaderboards and settings.automaticCurrentQuizLeaderboard then
         sendLeaderboard("Current quiz", "📜 | ")
     end
@@ -1623,6 +1627,7 @@ end
 ---------- UI ----------
 local library, window
 
+setgenv("DISABLE_RAYFIELD_REQUESTS", true) -- Disables Rayfield's analytic reports
 local success, errorMessage = pcall(function()
     library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/stable/source.lua'))() -- Rayfield lib
     window = library:CreateWindow({
@@ -1680,8 +1685,8 @@ mainTab:CreateInput({
     Callback = function(value)
         selectedCategory = getCategoryName(value)
         if selectedCategory then
-            notify("Selected category", "The current category is "..selectedCategory)
             categoryLabel:Set("Selected category: "..selectedCategory)
+            categoryDropdown:Set({selectedCategory})
         end
     end
 })
@@ -2096,9 +2101,7 @@ settingsTab:CreateButton({
         awaitingAnswer = false
         ContextActionService:UnbindAction("ToggleUI")
         library:Destroy()
-        pcall(function()
-            getgenv().QUIZBOT_RUNNING = false
-        end)
+        setgenv("QUIZBOT_RUNNING", false)
     end
 })
 
