@@ -1632,6 +1632,7 @@ end
 local library, window
 
 setgenv("DISABLE_RAYFIELD_REQUESTS", true) -- Disables Rayfield's analytic reports
+setgenv("rayfieldCached", true) -- Disables Rayfield's splash screen
 local success, errorMessage = pcall(function()
     library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/stable/source.lua'))() -- Rayfield lib
     window = library:CreateWindow({
