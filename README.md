@@ -50,7 +50,7 @@ spanish:Add("What does the word 'Agua' mean in Spanish?", {"Water", "Milk", "Dog
 The `:Add()` method accepts three arguments:
 - **The question text (string).** This is the message that the script will send once it reaches this question. Make it short and concise.
   `"What does the word 'Agua' mean in Spanish?"`
-- **Possible choices (table containing a list of strings).** **The first item in the table is the correct answer.** The order you specify the questions in does not matter, as they will be presented in a random order when the script runs.
+- **Possible choices (table containing a list of strings).** **The first item in the table is the correct answer.** The order you specify the answer options in does not affect the order they are sent in. The order they are sent in will always be randomized.
   `{"Water", "Milk", "Dog", "The number 5"}`. The correct answer here is *Water*, since it is the first item.
 - **Number of points. (number, optional).** If you do not specify this value, the default (1) will be used. This is the amount of points the person who answered the question will receive. I recommend only setting this
   to 2 for hard questions. Otherwise, leave it blank to use the default.
@@ -95,7 +95,7 @@ Difficulties serve two main purposes:
  - Acting as a filtering option for autoplay
 
 Creating new quizzes with difficulties is very straightforward. You just need to include the difficulty name when using the `.New()` function:
-```
+```lua
 local myCategory = CustomCategoryManager.New("Category Name", "Difficulty name")
 ```
 The difficulty name can be anything (difficulties are not case sensitive, e.g. EASY = easy). The ones used in the premade quizzes are: `easy`, `medium`, `hard`.
@@ -156,4 +156,4 @@ birdsHard:Add("What is the only bird known to have a poisonous bite?", {"Hooded 
 ```
 
 ### Footer
-Let me know if you have any feedback either about this tutorial or the quiz script. I'd be happy to help clarify and answer all your questions. 😁
+Let me know if you have any feedback either about this tutorial or quizbot. I'd be happy to help clarify and answer any questions. 😁
