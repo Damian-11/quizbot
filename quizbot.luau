@@ -1,4 +1,4 @@
-local VERSION = "2.4.6"
+local VERSION = "2.4.7"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -131,7 +131,7 @@ end
 setgenv("QUIZBOT_RUNNING", true)
 
 local function copyLatestScript() -- copies latest loadstring version of the script to clipboard
-    setclipboard('loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()')
+    setclipboard('loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau", true))()')
     notify("Script copied", "The latest version of quizbot has been copied to your clipboard")
 end
 
@@ -903,14 +903,14 @@ guessTheLanguage:Add("Guten Tag", {"German", "Tagalog", "Finnish", "Dutch"})
 guessTheLanguage:Add("こんにちは", {"Japanese", "Chinese", "Turkish", "Arabic"}, 2)
 guessTheLanguage:Add("नमस्ते", {"Hindi", "Indonesian", "Cantonese", "Nahuatl"})
 
-local capitals = categoryManager.New("Capitals", "easy")
+local capitals = categoryManager.New("Capital Cities", "easy")
 capitals:Add("What is the capital city of the USA?", {"Washington D.C.", "New York City", "Los Angeles", "Austin"})
 capitals:Add("What is the capital city of Finland?", {"Helsinki", "Stockholm", "Dublin", "Reykjavik"}, 2)
 capitals:Add("What is the capital city of Poland?", {"Warsaw", "Kiev", "Moscow", "Krakow"})
 capitals:Add("What is the capital city of Germany?", {"Berlin", "Frankfurt", "Hamburg", "Dusseldorf"})
 capitals:Add("What is the capital city of Canada?", {"Ottawa", "Toronto", "Vancouver", "Montreal"})
 
-local capitalsHard = categoryManager.New("Capitals", "hard")
+local capitalsHard = categoryManager.New("Capital Cities", "hard")
 capitalsHard:Add("What is the capital of Belgium?", {"Brussels", "Liege", "Amsterdam"})
 capitalsHard:Add("What is the capital of Somalia?", {"Mogadishu", "Garoowe", "Berbera"})
 capitalsHard:Add("What is the capital city of Mongolia?", {"Ulaanbaatar", "Hanoi", "Seoul"})
@@ -1196,7 +1196,7 @@ local categoriesToSend: { string } = {} -- no suffixes, only category names. for
 -- categoriesToSendDetailed sends if settings.sendDetailedCategorylist is true
 local categoriesToSendDetailed: { string } = {} -- format should be: food and drink, flags [easy, easy2, medium, hard], science [easy, hard]
 
-local function addToSendCategoryTable(categoryName: string, difficulties: string): string
+local function addToSendCategoryTable(categoryName: string, difficulties: string)
     local formattedCategory = {}
     local iterator = 0
     for difficulty, quizzes in difficulties do
