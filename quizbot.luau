@@ -1,4 +1,4 @@
-local VERSION = "2.4.7"
+local VERSION = "2.4.8"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -356,9 +356,9 @@ local function splitIntoMessages(itemTable: { string }, separtor: string, clearF
         local messageNumberString = string.format("(%d/%d)", messageIndex, #messages) -- [current message/amount of messages]
         if messageIndex == 2 or messageIndex == 3 then
             if clearFilter then
-                Chat("Waiting for filter...") -- hacky solution that prevents the second message getting filtered (sometimes works)
+                Chat("Waiting for filter...") -- hacky solution that prevents the second message getting filtered (works sometimes)
             end
-            task.wait(6)
+            task.wait(5)
         end
         if quizRunning then
             return
@@ -1566,7 +1566,7 @@ local function sendRules()
     if mode == "Quiz" then
         Chat("📜 | Quiz mode rules:")
         task.wait(2)
-        splitIntoMessages(quizModeRules, " ")
+        splitIntoMessages(quizModeRules, " ", 2)
     elseif mode == "Kahoot" then
         Chat("📜 | Kahoot mode rules:")
         task.wait(2)
