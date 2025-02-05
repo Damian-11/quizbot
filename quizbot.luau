@@ -1,4 +1,4 @@
-local VERSION = "2.4.8"
+local VERSION = "2.5.0"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -162,7 +162,7 @@ end)
 
 local outdated = if success and LATEST_VERSION then VERSION ~= LATEST_VERSION else false
 if outdated then
-    if not getDataFileValue("disableVersionAlert") then -- true if user has presses "Don't show again" before
+    if not getDataFileValue("disableVersionAlert") then -- true if user has pressed "Don't show again" before
         notify(
             "Outdated quizbot version",
             "You are running an outdated version of quizbot. Click the button below to copy the latest version of this script",
@@ -458,11 +458,11 @@ end
 --- Points OOP ---
 local pointManager = {}
 local userPoints = {}
-local UpdateUILeaderboard, ClearLeaderboardLabels -- defined later
+local UpdateUILeaderboard, ClearLeaderboardLabels -- Defined later
 
 function pointManager.NewAccount(player)
     userPoints[player.Name] = {}
-    local playerPoints = userPoints[player.Name]
+    local playerPoints = userPoints[player.Name] -- Tables are passed by reference so this will update the original table
     -- Save displayname when creating an account to preserve it when the user leaves the game
     -- This is needed when settings.removeLeavingPlayersFromLB is false
     playerPoints.DisplayName = getDisplayNameByUsername(player.Name)
@@ -493,37 +493,17 @@ function pointManager.AddPoints(player, points: number, type: string)
     UpdateUILeaderboard(type)
 end
 
-function pointManager.ClearQuizPointsForPlayer(player)
-    local playerAccount = userPoints[player.Name]
-    if not playerAccount then
-        return
-    end
-    playerAccount.CurrentQuizPoints = 0
-end
-
 function pointManager.ClearQuizPoints()
     for _, v in pairs(userPoints) do
         v.CurrentQuizPoints = 0
     end
-end
-
-function pointManager.ClearGlobalPointsForPlayer(player)
-    local playerAccount = userPoints[player.Name]
-    if not playerAccount then
-        return
-    end
-    playerAccount.GlobalPoints = 0
-end
-
-function pointManager.ClearGlobalPoints()
-    for _, v in pairs(userPoints) do
-        v.GlobalPoints = 0
-    end
+    ClearLeaderboardLabels("CurrentQuizPoints")
 end
 
 function pointManager.RemoveAccount(player)
     if userPoints[player.Name] then
         userPoints[player.Name] = nil
+        UpdateUILeaderboard("All")
     end
 end
 
@@ -665,7 +645,7 @@ local function processMessage(player: Player, message: string)
             SendMessageWhenReady("🔁 | Resending previous message because of chat filter...")
             task.wait(6)
         else
-            SendMessageWhenReady("Attempting to get around Roblox tagging")
+            SendMessageWhenReady("Attempting to get around Roblox tagging. Please wait...")
             task.wait(6)
             filtersInARow = 0
         end
@@ -756,7 +736,8 @@ local function awaitAnswer(targetQuestion)
     end
 
     if mode == "Quiz" then
-        while questionAnsweredBy == nil and not timeIsOut and quizRunning do
+        -- Wait for the question to be answered or the timeoutCoroutine to end
+        while questionAnsweredBy == nil and (table.find({"normal", "running", "suspended"}, coroutine.status(timeoutCoroutine))) and quizRunning do
             task.wait()
         end
         if timeIsOut or not quizRunning then
@@ -1148,22 +1129,65 @@ brainrot2:Add("Finish the quote: 'Just put the ___ in the bag.'", {"Fries", "Mon
 brainrot2:Add("Who is the main enemy of Skibidi Toilet?", {"Cameraman", "Janitor", "Skibidi Sink", "G-Man"}, 2)
 brainrot2:Add("What is the name of the purple McDonad's drink?", {"Grimace Shake", "Sussy Punch", "Blueberry McFlurry", "Expired Shake"})
 
+local gamerWords = categoryManager.New("Gamer Words", "easy")
+gamerWords:Add("What does 'GG' mean?", {"Good Game", "Get Good", "Great Goal", "Gamer Girl"})
+gamerWords:Add("Which phrase tells players to take a real-world break and go outside?", {"Touch Grass", "Eat a Salad", "Get Off", "Chillax"})
+gamerWords:Add("A 'Noob' is a:", {"New Player", "Night Ops Bot", "Cheater", "Nintendo Spectator"})
+gamerWords:Add("'OP' stands for:", {"Overpowered", "Original Poster", "Online Player", "Open Party"})
+gamerWords:Add("If someone is 'Buffing', they are:", {"Powering Up", "Working Out", "Cleaning Gear", "Taking Damage"}, 2)
+
+local gamerWords2 = categoryManager.New("Gamer Words", "easy")
+gamerWords2:Add("When devs weaken a strong weapon, they ___ it:", {"Nerf", "Buff", "Patch", "Hotfix"})
+gamerWords2:Add("'Camping' in shooters means:", {"Staying in One Spot", "Cheating", "Co-op Mode", "Building Camps"})
+gamerWords2:Add("A 'Clutch' is a:", {"Last-Second Win", "Car Part", "Team Carry", "Controller Glitch"})
+gamerWords2:Add("If a player is trying to beat a game as fast as possible, they are attempting a ...", {"Speedrun", "Speed Challenge", "Time Trial", "Time attack"})
+gamerWords2:Add("What is the act of pulling enemies away to fight them individually called?", {"Kiting", "Buffing", "Turtling", "Zerging"}, 2)
+
+local streaming = categoryManager.New("Streaming Culture", "medium")
+streaming:Add("'IRL' stands for:", {"In Real Life", "Internet Rules List", "Item Reward Level", "Instant Raid Loot"})
+streaming:Add("The 'PogChamp' emote expresses:", {"Excitement", "Disappointment", "Anger", "Sadness"})
+streaming:Add("A viewer who watches silently without chatting is called a:", {"Lurker", "NPC", "Nonchatter", "Sneaker"})
+streaming:Add("You can Cheer to streamers using which currency?", {"Bits", "Coins", "Credits", "Super Chats"})
+streaming:Add("What is the term for when a streamer sends their viewers to another live stream?", {"Raid", "Swap", "Relay", "Transfer"}, 2)
+
+local computerHardware = categoryManager.New("Computer Hardware", "medium")
+computerHardware:Add("What component is considered the 'brain' of a computer?", {"CPU", "RAM", "GPU", "HDD"})
+computerHardware:Add("What does GPU stand for?", {"Graphics Processing Unit", "General Processing Unit", "Gaming Performance Unit", "Global Processing Unit"})
+computerHardware:Add("What unit is computer memory (RAM) typically measured in?", {"Gigabytes", "Volts", "Hertz", "Watts"})
+computerHardware:Add("What is the standard port for connecting a monitor?", {"HDMI", "USB", "Ethernet", "PS/2"})
+computerHardware:Add("Which type of memory loses all its data when the computer is turned off?", {"RAM", "HDD", "SSD", "ROM"}, 2)
+
+local ancientCivilizations = categoryManager.New("Ancient Civilizations", "medium")
+ancientCivilizations:Add("Which ancient civilization had gladiator fights?", {"Romans", "Greeks", "Egyptians", "Chinese"})
+ancientCivilizations:Add("Which ancient civilization built the pyramids of Giza?", {"Egypt", "Inca", "Rome", "Greece"})
+ancientCivilizations:Add("What was the capital of the Roman Empire?", {"Rome", "Athens", "Alexandria", "Constantinople"})
+ancientCivilizations:Add("Which civilization invented democracy?", {"Ancient Greece", "Rome", "Egypt", "Persia"}, 2)
+ancientCivilizations:Add("Which ancient civilization invented paper?", {"Chinese", "Egyptians", "Greeks", "Persians"})
+
+local worldRecords = categoryManager.New("World Records", "easy")
+worldRecords:Add("What is the fastest land animal?", {"Cheetah", "Lion", "Horse", "Antelope"})
+worldRecords:Add("Which book holds the record for being the most sold and translated in history?", {"The Bible", "The Lord of the Rings", "Harry Potter and the Sorcerer's Stone", "The Quran"})
+worldRecords:Add("Which is the largest country by land area?", {"Russia", "China", "United States", "Canada"})
+worldRecords:Add("Which is the highest mountain in the world?", {"Mount Everest", "K2", "Mount Kilimanjaro", "Mount Fuji"})
+worldRecords:Add("What is the longest word in a major dictionary?", {"Pneumonoultramicroscopicsilicovolcanoconiosis", "Supercalifragilisticexpialidocious", "Hippopotomonstrosesquippedaliophobia", "Floccinaucinihilipilification"}, 2)
+
 local categoryTable = {}
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
 
 local function UpdateCategoryTable(categoryName: string, difficulties: table)
+    local multipleDifficulties = categories.numberOfDifficulties[categoryName] > 1
     for difficulty, quizzes in difficulties do
         for index, quiz in quizzes do
             local listName
             -- if multiple quizzes exist in current difficulty, and there are more difficulties, add their difficulty and index at the end to distinguish them
-            if #quizzes > 1 and categories.numberOfDifficulties[categoryName] > 1 then
+            if #quizzes > 1 and multipleDifficulties then
                 listName = categoryName.."-"..difficulty..index -- ex: flags-easy1, flags-easy2, flags-medium
                 table.insert(categoryTable, listName)
-            elseif categories.numberOfDifficulties[categoryName] > 1 and difficulty ~= "" then -- if multiple difficulties exist but only one quiz in current difficulty, only add the difficulty at the end
+            elseif multipleDifficulties and difficulty ~= "" then -- if multiple difficulties exist but only one quiz in current difficulty, only add the difficulty at the end
                 listName = categoryName.."-"..difficulty -- ex: flags-hard
                 table.insert(categoryTable, listName)
             -- if multiple quizzes exist under the same category, but all under the same difficulty, only add their index at the end
-            elseif #quizzes > 1 or difficulty == "" then
+            elseif #quizzes > 1 or (difficulty == "" and multipleDifficulties) then
                 listName = categoryName.."-"..index -- ex: history-1, history-2
                 table.insert(categoryTable, listName)
             else
@@ -1199,15 +1223,16 @@ local categoriesToSendDetailed: { string } = {} -- format should be: food and dr
 local function addToSendCategoryTable(categoryName: string, difficulties: string)
     local formattedCategory = {}
     local iterator = 0
+    local multipleDifficulties = categories.numberOfDifficulties[categoryName] > 1
     for difficulty, quizzes in difficulties do
         iterator += 1
-        if #quizzes > 1 and categories.numberOfDifficulties[categoryName] > 1 then
+        if #quizzes > 1 and multipleDifficulties then
             for index, quiz in quizzes do
                 table.insert(formattedCategory, difficulty..index) -- "easy1, easy2"
             end
-        elseif categories.numberOfDifficulties[categoryName] > 1 and difficulty == "" then
+        elseif multipleDifficulties and difficulty == "" then
             table.insert(formattedCategory, difficulty.."1") -- to make sure that categories without a difficulty also get shown
-        elseif categories.numberOfDifficulties[categoryName] > 1 then
+        elseif multipleDifficulties then
             table.insert(formattedCategory, difficulty) -- "easy"
         elseif #quizzes > 1 then
             table.insert(formattedCategory, tostring(#quizzes)) -- "2, 4". simply indicates how many quizzes exist in that cateogry
@@ -1417,7 +1442,9 @@ local function GetPointsAndUpdateLabels(type: string)
             local displayName = pointsArray[index][3]
             local points = roundNumber(pointsArray[index][2], 1)
             local pointWord = if points > 1 then "points" else "point"
-            label:Set(medalEmojis[index]..displayName.." (@"..username..") - "..points.." "..pointWord)
+            label:Set(`{medalEmojis[index]} {displayName} (@{username}) - {points} {pointWord}`)
+        else
+            label:Set(medalEmojis[index].." [Empty] - 0")
         end
     end
 end
@@ -1426,14 +1453,13 @@ ClearLeaderboardLabels = function(type: string) -- clears current quiz points in
         label:Set(medalEmojis[index].." [Empty] - 0")
     end
 end
-UpdateUILeaderboard = function(type: string) -- updates the labels for the leaderboard in the UI
-    if type ~= "All" and not leaderboardLabels[type] then
-        return
-    end
+UpdateUILeaderboard = function(type: string?) -- updates the labels for the leaderboard in the UI
+    type = type or "All"
     if type == "All" then
         GetPointsAndUpdateLabels("GlobalPoints")
         GetPointsAndUpdateLabels("CurrentQuizPoints")
     else
+        assert(leaderboardLabels[type], "Invalid leaderboard type")
         GetPointsAndUpdateLabels(type)
     end
 end
@@ -1481,7 +1507,6 @@ local function startQuiz(category: string)
     end
     quizRunning = true
     pointManager.ClearQuizPoints()
-    ClearLeaderboardLabels("CurrentQuizPoints")
     Chat('🚀 | Initiating "'..category..'" quiz...')
     UpdateSignText(category)
     task.wait(3)
@@ -1783,9 +1808,9 @@ mainTab:CreateButton({
 
 local leaderboardTab = window:CreateTab("Leaderboard", 97885193604839)
 leaderboardTab:CreateSection("Server leaderboard (doesn't reset)")
-table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
-table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
-table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥉 [Empty] - 0"))
+for i = 1, 3 do
+    table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel(medalEmojis[i].." [Empty] - 0"))
+end
 leaderboardTab:CreateButton({
     Name = "Send server leaderboard in chat",
     Callback = function()
@@ -1794,9 +1819,9 @@ leaderboardTab:CreateButton({
 })
 
 leaderboardTab:CreateSection("Current quiz leaderboard (resets every quiz)")
-table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
-table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
-table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥉 [Empty] - 0"))
+for i = 1, 3 do
+    table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel(medalEmojis[i].." [Empty] - 0"))
+end
 leaderboardTab:CreateButton({
     Name = "Send current quiz leaderboard in chat",
     Callback = function()
@@ -1821,7 +1846,9 @@ playerControlTab:CreateInput({
         if #value < 1 then return end
         targetPlayer = getTargetPlayer(value)
         if targetPlayer then
-            targetPlayerLabel:Set("Target: "..targetPlayer.Name)
+            targetPlayerLabel:Set(`Target: {targetPlayer.DisplayName} (@{targetPlayer.Name})`)
+        else
+            targetPlayerLabel:Set("Target: None")
         end
     end
 })
@@ -1847,15 +1874,6 @@ playerControlTab:CreateInput({
         end
     end
 })
-local pointsType = "Server points" -- Server points by default
-playerControlTab:CreateDropdown({
-    Name = "Apply as",
-    Options = {"Server points", "Current quiz points"},
-    CurrentOption = pointsType,
-    Callback = function(option)
-        pointsType = option[1]
-    end
-})
 playerControlTab:CreateButton({
     Name = "Apply points",
     Callback = function()
@@ -1863,15 +1881,8 @@ playerControlTab:CreateButton({
             return
         end
         if pointsToAdd then
-            if pointsType == "Server points" then
-                pointManager.AddPoints(targetPlayer, pointsToAdd, "GlobalPoints")
-                notify("Points added", pointsToAdd.." server points have been added to "..targetPlayer.Name)
-            elseif pointsType == "Current quiz points" then
-                pointManager.AddPoints(targetPlayer, pointsToAdd, "CurrentQuizPoints")
-                notify("Points added", pointsToAdd.." current quiz points have been added to "..targetPlayer.Name)
-            else
-                notify("No point type selected", "Select either server points or current quiz points to add")
-            end
+            pointManager.AddPoints(targetPlayer, pointsToAdd, "GlobalPoints")
+            notify("Points added", pointsToAdd.." server points have been added to "..targetPlayer.Name)
         else
             notify("Enter a point amount", "Enter an amount of points to add")
         end
