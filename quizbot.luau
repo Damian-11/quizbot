@@ -1,4 +1,4 @@
-local VERSION = "2.5.0"
+local VERSION = "2.5.1"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -737,6 +737,7 @@ local function awaitAnswer(targetQuestion)
 
     if mode == "Quiz" then
         -- Wait for the question to be answered or the timeoutCoroutine to end
+        -- Simply checking the timeIsOut variable is not sufficient, as the SendMessageWhenReady function may still be running
         while questionAnsweredBy == nil and (table.find({"normal", "running", "suspended"}, coroutine.status(timeoutCoroutine))) and quizRunning do
             task.wait()
         end
@@ -754,7 +755,7 @@ local function awaitAnswer(targetQuestion)
         awaitingAnswer = false
         table.clear(userCooldowns)
     else
-        while not timeIsOut and quizRunning do
+        while table.find({"normal", "running", "suspended"}, coroutine.status(timeoutCoroutine)) and quizRunning do
             task.wait(1)
             questionPoints -= questionPoints / settings.questionTimeout
         end
