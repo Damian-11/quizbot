@@ -1,4 +1,4 @@
-local VERSION = "2.5.1"
+local VERSION = "2.5.2"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -839,7 +839,7 @@ science:Add("What is cooling lava called?", {"Igneous rocks", "Magma", "Fossils"
 local science2 = categoryManager.New("Science", "medium")
 science2:Add("What is faster, sound or light?", {"Light", "Sound", "They travel at the same speed", "They don't move"})
 science2:Add("Which of these is NOT one of Newton's laws of motion?", {"Objects at rest stay in motion", "Force equals mass times acceleration", "Every action has an equal and opposite reaction", "An object in motion stays in motion"})
-science2:Add("Who developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo"})
+science2:Add("Who developed the theory of relativity?", {"Einstein", "Newton", "Galileo", "Darwin"})
 science2:Add("Which of these is not a state of matter?", {"Energy", "Solid", "Liquid", "Gas"})
 science2:Add("What is the powerhouse of the cell?", {"Mitochondria", "Nucleus", "Cytoplasm", "Nucleic membrane"}, 2)
 
@@ -857,7 +857,7 @@ history2:Add("Which country gifted the Statue of Liberty to the United States?",
 history2:Add("What was the name of the period of renewed interest in art and learning?", {"Renaissance", "Reformation", "Enlightenment", "Industrial Revolution"}, 2)
 history2:Add("Which famous trade route connected Europe and Asia?", {"Silk Road", "Spice Route", "Amber Road", "Trans-Saharan Route"})
 
-local foodAndDrink = categoryManager.New("Food and drink", "medium")
+local foodAndDrink = categoryManager.New("Food and Drink", "medium")
 foodAndDrink:Add("Which country is the largest producer of coffee in the world?", {"Brazil", "Vietnam", "Colombia", "Ethiopia"})
 foodAndDrink:Add("What is the name of the Italian dessert made from layers of sponge cake soaked in coffee and mascarpone cheese?", {"Tiramisu", "Maritozzo", "Cannoli", "Zabaglione"})
 foodAndDrink:Add("What is the main ingredient of the Spanish dish, Paella?", {"Rice", "Bread", "Pasta", "Chicken"})
@@ -869,13 +869,13 @@ trivia:Add("Which is NOT a Nobel Prize category?", {"Mathematics", "Physics", "L
 trivia:Add("Which musical instrument has 47 strings and seven pedals?", {"Harp", "Piano", "Guitar", "Violin"})
 trivia:Add("What is the capital city of Japan?", {"Tokyo", "Beijing", "Seoul", "Bangkok"})
 trivia:Add("Which country is the only one to have a non-rectangular flag?", {"Nepal", "Switzerland", "Japan", "Qatar"})
-trivia:Add("'Bokmal' and 'Nynorsk' are the two official written forms of WHICH language?", {"Norwegian", "Italian", "Danish", "Spanish"}, 2)
+trivia:Add("'Bokmål' and 'Nynorsk' are the two official written forms of which language?", {"Norwegian", "Italian", "Danish", "Spanish"}, 2)
 
 local trivia2 = categoryManager.New("Trivia", "medium")
 trivia2:Add("Which animal is the national emblem of Australia?", {"Kangaroo", "Koala", "Emu", "Platypus"})
 trivia2:Add("What does the Richter scale measure?", {"Earthquake intensity", "Wind Speed", "Temperature", "Tornado Strength"}, 2)
 trivia2:Add("Which currency is used in Japan?", {"Yen", "Dollar", "Euro", "Pound"})
-trivia2:Add("Which famous scientist developed the theory of relativity?", {"Albert Einstein", "Isaac Newton", "Galileo Galilei", "Thomas Edison"})
+trivia2:Add("What is the hardest natural substance on Earth?", {"Diamond", "Gold", "Iron", "Platinum"})
 trivia2:Add("In sport, what does the term PGA refer to?", {"Professional Golfers Association", "Par Golfing Average", "Playing Golf Average", "Part-Time Golfing Amaterurs"})
 
 local guessTheLanguage = categoryManager.New("Guess the language", "medium")
@@ -973,8 +973,8 @@ local sports = categoryManager.New("Sports", "easy")
 sports:Add("In which sport might you perform a 'bicycle kick'?", {"Football (Soccer)", "Basketball", "Rugby", "Tennis"})
 sports:Add("Which country is famous for inventing sumo wrestling?", {"Japan", "China", "India", "Thailand"})
 sports:Add("What animal is used in the traditional sport of polo?", {"Horse", "Camel", "Elephant", "Yak"})
-sports:Add("What sport is also known as table tennis?", {"Ping pong", "Badminton", "Squash", "Tennis"})
-sports:Add("What is the name of the trophy awarded to the winner of the NBA Finals?", {"Larry O'Brien Trophy", "NBA Champion Trophy", "Stanley Cup", "World Series Trophy"}, 2)
+sports:Add("What sport is also known as table tennis?", {"Ping Pong", "Badminton", "Squash", "Tennis"})
+sports:Add("Which sport uses the terms 'strike' and 'spare'?", {"Bowling", "Baseball", "Cricket", "Golf"}, 2)
 
 local minecraft = categoryManager.New("Minecraft", "easy")
 minecraft:Add("What is the name of the green creature that explodes?", {"Creeper", "Zombie", "Skeleton", "Slime"})
@@ -1105,7 +1105,7 @@ guessTheMovie:Add("What movie tells the story of a group of toys that come to li
 local guessTheBook = categoryManager.New("Guess the Book", "medium")
 guessTheBook:Add("In which book does a young girl named Alice fall down a rabbit hole into a fantastical world?", {"Alice in Wonderland", "The Wonderful Wizard of Oz", "Peter Pan", "The Secret Garden"})
 guessTheBook:Add("Which book tells the story of a character named Bilbo Baggins?", {"The Hobbit", "The Lord of the Rings", "The Silmarillion", "Eragon"})
-guessTheBook:Add("In which dystopian novel is the phrase 'Big Brother is watching you' prominent?", {"1984", "Brave New World", "Fahrenheit 451", "The Hunger Games"})
+guessTheBook:Add("Which book features a dystopian society where books are burned?", {"Fahrenheit 451", "Brave New World", "Lord of the Flies", "Slaughterhouse-Five"}, 2)
 guessTheBook:Add("Which book tells the story of a boy named Charlie who wins a golden ticket?", {"Charlie and the Chocolate Factory", "Charlie and the Giant Peach", "Wonka's Chocolate Factory", "The BFG"})
 guessTheBook:Add("Which book tells the story of a boy who never grows up and lives in Neverland?", {"Peter Pan", "The Wonderful Wizard of Oz", "Alice in Wonderland", "The Chronicles of Narnia"})
 
@@ -1280,7 +1280,7 @@ local function sendCategories()
     elseif currentlySending then
         notify(`{currentlySending} currently being sent`, "Wait for it to finish sending before sending the category list")
     elseif quizRunning then
-        notify("Can't send cateogry list", "Can't send the category list while quiz is running. Stop the current quiz or wait for it to end")
+        notify("Can't send category list", "Can't send the category list while a quiz is running. Stop the quiz or wait for it to end")
     end
 end
 
@@ -1470,7 +1470,7 @@ local autoPlayDifficulties = difficultyOrder -- allowed difficulties by autoplay
 local function choseAutoplayCategory()
     local autoplayComplete = true -- true if every category has been played
     for _, difficulty in autoPlayDifficulties do -- do this each time in case the user changes the autoplay filter
-        if autoplayChosenCategories[difficulty] and not #autoplayChosenCategories[difficulty] == numberOfCategoriesPerDifficulty[difficulty] then
+        if autoplayChosenCategories[difficulty] and not (#autoplayChosenCategories[difficulty] == numberOfCategoriesPerDifficulty[difficulty]) then
             autoplayComplete = false
             break
         -- if the difficulty has not been chosen yet at all or there are no quizzes in it
@@ -1543,7 +1543,9 @@ local function startQuiz(category: string)
     end
     UpdateSignText(endMessage)
     task.delay(15, function()
-       UpdateSignText("")
+        if not quizRunning then
+            UpdateSignText("")
+        end
     end)
     if settings.automaticLeaderboards and settings.automaticServerQuizLeaderboard then
         sendLeaderboard("Server", "🏆 | Quiz ended. ")
