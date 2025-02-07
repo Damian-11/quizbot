@@ -1,4 +1,4 @@
-local VERSION = "2.5.2"
+local VERSION = "2.5.3"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -860,7 +860,7 @@ history2:Add("Which famous trade route connected Europe and Asia?", {"Silk Road"
 local foodAndDrink = categoryManager.New("Food and Drink", "medium")
 foodAndDrink:Add("Which country is the largest producer of coffee in the world?", {"Brazil", "Vietnam", "Colombia", "Ethiopia"})
 foodAndDrink:Add("What is the name of the Italian dessert made from layers of sponge cake soaked in coffee and mascarpone cheese?", {"Tiramisu", "Maritozzo", "Cannoli", "Zabaglione"})
-foodAndDrink:Add("What is the main ingredient of the Spanish dish, Paella?", {"Rice", "Bread", "Pasta", "Chicken"})
+foodAndDrink:Add("What is the national dish of England?", {"Fish and Chips", "Shepherd's Pie", "Yorkshire Pudding", "Sunday Roast"})
 foodAndDrink:Add("What is the name of the fermented milk drink that is popular in Central Asia & Eastern Europe?", {"Kefir", "Karin", "Kulmel", "Yogurt"})
 foodAndDrink:Add("Which country does feta cheese come from?", {"Greece", "Switzerland", "Spain", "France"}, 2)
 
@@ -1071,7 +1071,7 @@ local biology = categoryManager.New("Biology", "medium")
 biology:Add("What is the name of the process by which plants make their own food?", {"Photosynthesis", "Respiration", "Transpiration", "Fermentation"})
 biology:Add("What is the smallest unit of life?", {"Cell", "Atom", "Molecule", "Organ"})
 biology:Add("What is the main function of red blood cells?", {"Oxygen transport", "Fighting infections", "Blood clotting", "Producing antibodies"})
-biology:Add("What are the four types of macromolecules found in living things?", {"Carbohydrates, proteins, lipids, and nucleic acids", "Glucose, amino acids, fatty acids, and nucleotides", "Starch, enzymes, fats, and DNA", "Sugars, peptides, oils, and RNA"}, 2)
+biology:Add("What are the main building blocks of proteins?", {"Amino acids", "Fatty acids", "Nucleic acids", "Glucose"}, 2)
 biology:Add("What is the name of the molecule that carries genetic information in most living organisms?", {"DNA", "Cell", "ATP", "ADP"})
 
 local sayings = categoryManager.New("Sayings and Idioms", "easy")
@@ -1086,7 +1086,7 @@ internetSlang:Add("What does 'LOL' stand for?", {"Laugh Out Loud", "Lots Of Love
 internetSlang:Add("What does 'FOMO' stand for?", {"Fear Of Missing Out", "Friends Of My Office", "Fond Of Moving On", "Full Of Many Options"})
 internetSlang:Add("What does 'IMO' stand for?", {"In My Opinion", "Internet Mail Order", "It's Monday Obviously", "I Mean Okay"})
 internetSlang:Add("What is the meaning of 'SMH'?", {"Shaking My Head", "So Much Hate", "Send More Help", "Smashing My Head"})
-internetSlang:Add("What does 'IIRC' stand for?", {"If I Recall Correctly (If I Remember Correctly)", "It Is Really Cool", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
+internetSlang:Add("What does 'IIRC' stand for?", {"If I Recall Correctly (If I Remember Correctly)", "It Is Really Cool (Is It Really Cool)", "I'm Incredibly Rich, Child", "Interesting Information Requires Consideration"}, 2)
 
 local internetSlang2 = categoryManager.New("Internet Slang", "medium")
 internetSlang2:Add("What does 'FTFY' mean?", {"Fixed That For You", "For The Following Year", "Forget That, Find Yourself", "Faster Than Fifty Yaks"})
