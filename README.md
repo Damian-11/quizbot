@@ -2,7 +2,7 @@
 # How to run quizbot
 To run the script, paste this code into your preferred executor:
 ```lua
-local CategoryManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()
+local CustomCategoryManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()
 
 --[[ Custom category template:
 local myCategory = CustomCategoryManager.New("Category Name") -- create a new category
