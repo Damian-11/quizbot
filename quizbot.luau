@@ -221,7 +221,7 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
         while (not antiFilteringDone or mainQuestionSent) and quizRunning do -- yields until the anti filter functions have done their job
             task.wait()
             if tick() - lastMessageTime > 4.5 then -- prevents the antifiltering functions yielding forever in case the message fails to send
-                notify("Error sending quiz message", "Chat rate limit reached. Avoid sending messages in the chat while a quiz is running")
+                notify("Failed to Send Quiz Message", "Message rate limit exceeded. Avoid sending messages in the chat while a quiz is running. This could also be caused by high network latency.", nil, 10)
                 messageFiltered = true -- the message not sending at all is equivalent to it being filtered
                 break
             end
