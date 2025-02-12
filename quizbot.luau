@@ -1,4 +1,4 @@
-local VERSION = "2.5.3"
+local VERSION = "2.5.4"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -88,13 +88,17 @@ local function Chat(msg)
     end
 end
 
-local function Shuffle(tbl) -- Table shuffle function by sleitnick
+local function shuffle(tbl) -- Table shuffle function by sleitnick
     local rng = Random.new()
     for i = #tbl, 2, -1 do
         local j = rng:NextInteger(1, i)
         tbl[i], tbl[j] = tbl[j], tbl[i]
     end
     return tbl
+end
+
+local function sortAlphabetically(a, b)
+    return string.lower(a) < string.lower(b)
 end
 
 local function roundNumber(num, numDecimalPlaces)
@@ -290,7 +294,7 @@ function question:Ask(): boolean
     end
     answerOptionsSaid = 0
     local rightAnswerBeforeShuffle = self.answers[self.rightAnswerIndex]
-    self.answers = Shuffle(self.answers)
+    self.answers = shuffle(self.answers)
     self.rightAnswerIndex = table.find(self.answers, rightAnswerBeforeShuffle)
     self.rightAnswer = letters[self.rightAnswerIndex]
     if self.value > 1 then
@@ -1172,7 +1176,7 @@ worldRecords:Add("Which is the largest country by land area?", {"Russia", "China
 worldRecords:Add("Which is the highest mountain in the world?", {"Mount Everest", "K2", "Mount Kilimanjaro", "Mount Fuji"})
 worldRecords:Add("What is the longest word in a major dictionary?", {"Pneumonoultramicroscopicsilicovolcanoconiosis", "Supercalifragilisticexpialidocious", "Hippopotomonstrosesquippedaliophobia", "Floccinaucinihilipilification"}, 2)
 
-local categoryTable = {}
+local categoryTable = {} -- Final list names of all quizzes, for example "Geography-easy", "Geography-medium", "Trivia-1", etc.
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
 
 local function UpdateCategoryTable(categoryName: string, difficulties: table)
@@ -1203,7 +1207,7 @@ end
 for categoryName, difficulties in categories.categoryList do
     UpdateCategoryTable(categoryName, difficulties)
 end
-table.sort(categoryTable)
+table.sort(categoryTable, sortAlphabetically)
 
 local function SortDifficulty(a, b)
 	local aOrder = table.find(difficultyOrder, a:match("^(%a+)%d*$"))
@@ -1252,8 +1256,8 @@ end
 for categoryName, difficulties in categories.categoryList do -- indexing categories for sending with sendCategories() function
     addToSendCategoryTable(categoryName, difficulties)
 end
-table.sort(categoriesToSend)
-table.sort(categoriesToSendDetailed)
+table.sort(categoriesToSend, sortAlphabetically)
+table.sort(categoriesToSendDetailed, sortAlphabetically)
 
 local firstTimeSendingCategories = true -- Roblox often filters the category table the first time you try to send it
 local currentlySending: string? -- gives alert in this format: "[currentlySending] currently being sent"
@@ -1309,11 +1313,11 @@ local function UpdateCategory(categoryName: string) -- reindexes the specified c
     categoriesToSendDetailed = RemoveDuplicateCategories(categoriesToSendDetailed, categoryName, " [")
     local difficulties = categories.categoryList[categoryName]
     addToSendCategoryTable(categoryName, difficulties)
-    table.sort(categoriesToSend)
-    table.sort(categoriesToSendDetailed)
+    table.sort(categoriesToSend, sortAlphabetically)
+    table.sort(categoriesToSendDetailed, sortAlphabetically)
     categoryTable = RemoveDuplicateCategories(categoryTable, categoryName, "-")
     UpdateCategoryTable(categoryName, difficulties)
-    table.sort(categoryTable)
+    table.sort(categoryTable, sortAlphabetically)
     categoryDropdown:Refresh(categoryTable)
 end
 
@@ -1336,6 +1340,8 @@ function CustomCategoryManager.New(categoryName: string, difficulty: string?)
     if type(categoryName) == "string" then
         if type(difficulty) ~= "string" then
             difficulty = "" -- if difficulty is not a string, use default (blank)
+        else
+            difficulty = string.lower(difficulty)
         end
         -- if brand new category is added, add it to the filter dropdown
         if not numberOfCategoriesPerDifficulty[difficulty] or numberOfCategoriesPerDifficulty[difficulty] == 0 then
@@ -1346,6 +1352,12 @@ function CustomCategoryManager.New(categoryName: string, difficulty: string?)
                 table.insert(autoplayFilterDifficulties, difficulty)
             end
             autoplayFilterDropdown:Refresh(autoplayFilterDifficulties)
+        end
+        -- If a category with the same name already exists, use the existing name
+        for name, _ in categories.categoryList do
+            if string.lower(name) == string.lower(categoryName) then
+                categoryName = name
+            end
         end
         local newCategory = setmetatable(categoryManager.New(categoryName, difficulty), CustomCategoryManager)
         categoryNames[newCategory] = categoryName
