@@ -1,4 +1,4 @@
-local VERSION = "2.5.4"
+local VERSION = "2.5.5"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -1904,11 +1904,11 @@ playerControlTab:CreateButton({
     end
 })
 playerControlTab:CreateButton({
-    Name = "Reset global & quiz points",
+    Name = "Remove all points from player",
     Callback = function()
         if not TargetExists(targetPlayer) then return end
         pointManager.RemoveAccount(targetPlayer)
-        notify("Points reset", "Successfully removed all points for "..targetPlayer.Name)
+        notify("Points reset", "Successfully removed all points from "..targetPlayer.Name)
     end
 })
 
