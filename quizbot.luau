@@ -1,4 +1,4 @@
-local VERSION = "2.5.5"
+local VERSION = "2.6.0"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -73,19 +73,8 @@ function intToRoman(num)
     return roman
 end
 
-local oldChat: boolean
-if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-    oldChat = false
-else
-    oldChat = true
-end
-
 local function Chat(msg)
-    if not oldChat then
-        textChatService.TextChannels.RBXGeneral:SendAsync(msg)
-    else
-        replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
-    end
+    textChatService.TextChannels.RBXGeneral:SendAsync(msg)
 end
 
 local function shuffle(tbl) -- Table shuffle function by sleitnick
@@ -669,37 +658,14 @@ local function processMessage(player: Player, message: string)
     end
 end
 
-local chatConnection
-local joinConnection
-local playerChatConnections = {}
-if oldChat then
-    settings.repeatTagged = false -- repeating tagged messages does not work on old chat system because of problems with diffrent chat event (player.Chatted vs textChatService.MessageReceived)
-    for _, player in players:GetPlayers() do
-        if player ~= localPlayer then
-            local connection
-            connection = player.Chatted:Connect(function(message)
-                startChatListening(message, player)
-            end)
-            table.insert(playerChatConnections, connection)
-        end
+local chatConnection = textChatService.MessageReceived:Connect(function(textChatMessage)
+    local player = if textChatMessage.TextSource then players:GetPlayerByUserId(textChatMessage.TextSource.UserId) else nil
+    if not player then
+        return
     end
-    joinConnection = players.PlayerAdded:Connect(function(player)
-        local connection
-        connection = player.Chatted:Connect(function(message)
-            startChatListening(message, player)
-        end)
-        table.insert(playerChatConnections, connection)
-    end)
-else
-    chatConnection = textChatService.MessageReceived:Connect(function(textChatMessage)
-        local player = if textChatMessage.TextSource then players:GetPlayerByUserId(textChatMessage.TextSource.UserId) else nil
-        if not player then
-            return
-        end
-        local message = textChatMessage.Text
-        processMessage(player, message)
-    end)
-end
+    local message = textChatMessage.Text
+    processMessage(player, message)
+end)
 
 local function awaitAnswer(targetQuestion)
     if not quizRunning then
@@ -805,6 +771,9 @@ local function awaitAnswer(targetQuestion)
 end
 
 --- Questions ---
+-- Built-in quiz definitions are wrapped in do-end block to prevent reaching the 200 local variable limit
+do
+
 local countriesEasy = categoryManager.New("Guess the country", "easy")
 countriesEasy:Add("What country is this? 🇹🇷", {"Turkey", "Spain", "Greece", "Cyprus"})
 countriesEasy:Add("What country is this? 🇪🇸", {"Spain", "Portugal", "Greece", "Mexico"})
@@ -1175,6 +1144,8 @@ worldRecords:Add("Which book holds the record for being the most sold and transl
 worldRecords:Add("Which is the largest country by land area?", {"Russia", "China", "United States", "Canada"})
 worldRecords:Add("Which is the highest mountain in the world?", {"Mount Everest", "K2", "Mount Kilimanjaro", "Mount Fuji"})
 worldRecords:Add("What is the longest word in a major dictionary?", {"Pneumonoultramicroscopicsilicovolcanoconiosis", "Supercalifragilisticexpialidocious", "Hippopotomonstrosesquippedaliophobia", "Floccinaucinihilipilification"}, 2)
+
+end -- End of quiz definitions
 
 local categoryTable = {} -- Final list names of all quizzes, for example "Geography-easy", "Geography-medium", "Trivia-1", etc.
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
@@ -1679,6 +1650,7 @@ local success, errorMessage = pcall(function()
         Name = "quizbot | Made by Damian11 AKA Quizzer",
         LoadingTitle = "Loading quizbot...",
         LoadingSubtitle = "made by Damian11 AKA Quizzer",
+        ShowText = "quizbot",
         DisableRayfieldPrompts = true,
         DisableBuildWarnings = true,
     })
@@ -1692,15 +1664,13 @@ if not success then -- if the libary is down for any reason, ask user to report 
     return -- stops the script
 end
 
-local uiVisible = true
 local function toggleUI(_actionName, inputState, _inputObject)
     if inputState == Enum.UserInputState.Begin then
-        library:SetVisibility(not uiVisible)
-        uiVisible = library:IsVisible()
+        library:SetVisibility(not library:IsVisible())
     end
 end
 
--- remember that laptops with touch screens exist
+-- Remember that laptops with touch screens exist
 if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
     ContextActionService:BindAction("ToggleUI", toggleUI, true)
     ContextActionService:SetImage("ToggleUI", "rbxassetid://100698995249426")
@@ -2112,11 +2082,7 @@ settingsTab:CreateToggle({
     Name = "Do not repeat tagged messages",
     CurrentValue = not settings.repeatTagged,
     Callback = function(value)
-        if not oldChat then
-            settings.repeatTagged = not value
-        else
-            notify("Can't repeat tagged", "This game uses an unsupported chat system")
-        end
+        settings.repeatTagged = not value
     end
 })
 settingsTab:CreateToggle({
@@ -2152,14 +2118,7 @@ settingsTab:CreateSection("Disable script")
 settingsTab:CreateButton({
     Name = "Destory UI and disable script",
     Callback = function()
-        if oldChat then
-            joinConnection:Disconnect()
-            for _, connection in playerChatConnections do
-                connection:Disconnect()
-            end
-        else
-            chatConnection:Disconnect()
-        end
+        chatConnection:Disconnect()
         quizCooldown = true
         quizRunning = false
         currentQuestion = nil
