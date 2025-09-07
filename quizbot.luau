@@ -1,4 +1,4 @@
-local VERSION = "2.6.0"
+local VERSION = "2.7.0"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -558,7 +558,7 @@ local function startChatListening(message: string, player: Player)
         patterns[4] = "^([A-"..letters[#currentQuestion.answers].."])$" -- checks for letter with no spaces after or before it (ex: "B")
 
         messageContent = string.gsub(messageContent, "[%).?!]", "") -- removes ), ., ?, and ! to recognize people saying a), b., c?, or d!
-        local magnitude = (character.HumanoidRootPart.Position - senderCharacter.HumanoidRootPart.Position).Magnitude -- make sure sender is not too far away to prevent false matches
+        local magnitude = (character:GetPivot().Position - senderCharacter:GetPivot().Position).Magnitude -- make sure sender is not too far away to prevent false matches
         if magnitude < 10 then
             for i = 1, 4 do
                 local match = messageContent:match(patterns[i])
@@ -1147,6 +1147,14 @@ worldRecords:Add("What is the longest word in a major dictionary?", {"Pneumonoul
 
 end -- End of quiz definitions
 
+-- Adds trailing zeros to a number to make it a certain length.
+-- For example, addTrailingZeros(5, 3) returns "005"
+local function addTrailingZeros(number: number, desiredLength: number): string
+    local numberString = tostring(number)
+    local lenghtDifference = desiredLength - string.len(numberString)
+    return string.rep("0", math.max(0, lenghtDifference))..numberString
+end
+
 local categoryTable = {} -- Final list names of all quizzes, for example "Geography-easy", "Geography-medium", "Trivia-1", etc.
 local categoryLookupTable = {} -- categoryLookupTable is used to get the actual quiz table from formatted category name
 
@@ -1157,14 +1165,17 @@ local function UpdateCategoryTable(categoryName: string, difficulties: table)
             local listName
             -- if multiple quizzes exist in current difficulty, and there are more difficulties, add their difficulty and index at the end to distinguish them
             if #quizzes > 1 and multipleDifficulties then
-                listName = categoryName.."-"..difficulty..index -- ex: flags-easy1, flags-easy2, flags-medium
+                -- Add trailing zeros to prevent cases where a number such as "12" comes before "2"
+                local finalIndex = addTrailingZeros(index, string.len(#quizzes))
+                listName = categoryName.."-"..difficulty..finalIndex -- ex: flags-easy1, flags-easy2, flags-medium
                 table.insert(categoryTable, listName)
             elseif multipleDifficulties and difficulty ~= "" then -- if multiple difficulties exist but only one quiz in current difficulty, only add the difficulty at the end
                 listName = categoryName.."-"..difficulty -- ex: flags-hard
                 table.insert(categoryTable, listName)
             -- if multiple quizzes exist under the same category, but all under the same difficulty, only add their index at the end
             elseif #quizzes > 1 or (difficulty == "" and multipleDifficulties) then
-                listName = categoryName.."-"..index -- ex: history-1, history-2
+                local finalIndex = addTrailingZeros(index, string.len(#quizzes))
+                listName = categoryName.."-"..finalIndex -- ex: history-1, history-2
                 table.insert(categoryTable, listName)
             else
                 listName = categoryName -- ex: flags
@@ -1196,7 +1207,7 @@ local categoriesToSend: { string } = {} -- no suffixes, only category names. for
 -- categoriesToSendDetailed sends if settings.sendDetailedCategorylist is true
 local categoriesToSendDetailed: { string } = {} -- format should be: food and drink, flags [easy, easy2, medium, hard], science [easy, hard]
 
-local function addToSendCategoryTable(categoryName: string, difficulties: string)
+local function addToSendCategoryTable(categoryName: string, difficulties: { any })
     local formattedCategory = {}
     local iterator = 0
     local multipleDifficulties = categories.numberOfDifficulties[categoryName] > 1
@@ -1263,8 +1274,7 @@ local  function IsCategoryEqual(categoryName: string, matchCategory: string, suf
     if categoryName == matchCategory then
         return true
     end
-    suffix = EscapePattern(suffix)
-    local pattern = "^"..categoryName..suffix
+    local pattern = "^"..EscapePattern(categoryName..suffix)
     return string.match(matchCategory, pattern) ~= nil
 end
 
@@ -1284,12 +1294,8 @@ local function UpdateCategory(categoryName: string) -- reindexes the specified c
     categoriesToSendDetailed = RemoveDuplicateCategories(categoriesToSendDetailed, categoryName, " [")
     local difficulties = categories.categoryList[categoryName]
     addToSendCategoryTable(categoryName, difficulties)
-    table.sort(categoriesToSend, sortAlphabetically)
-    table.sort(categoriesToSendDetailed, sortAlphabetically)
     categoryTable = RemoveDuplicateCategories(categoryTable, categoryName, "-")
     UpdateCategoryTable(categoryName, difficulties)
-    table.sort(categoryTable, sortAlphabetically)
-    categoryDropdown:Refresh(categoryTable)
 end
 
 local numberOfCategoriesPerDifficulty: { number } = {}
@@ -1308,6 +1314,8 @@ local categoryNames = {}
 local autoplayFilterDifficulties: { string } = {} -- array of difficulties that'll show up on the autoplay filter dropdown
 local autoplayFilterDropdown
 function CustomCategoryManager.New(categoryName: string, difficulty: string?)
+    -- Do sorting and refresh category dropdown only when all custom categories are added
+    CustomCategoryManager.scheduleRefresh()
     if type(categoryName) == "string" then
         if type(difficulty) ~= "string" then
             difficulty = "" -- if difficulty is not a string, use default (blank)
@@ -1332,6 +1340,7 @@ function CustomCategoryManager.New(categoryName: string, difficulty: string?)
         end
         local newCategory = setmetatable(categoryManager.New(categoryName, difficulty), CustomCategoryManager)
         categoryNames[newCategory] = categoryName
+        UpdateCategory(categoryNames[newCategory])
         return newCategory
     else
         print("Custom quiz error | CategoryName is not a string")
@@ -1345,7 +1354,6 @@ function CustomCategoryManager:Add(quesitonText: string, options: { string }, va
             if #options > 1 then
                 if type(value) == "nil" or type(value) == "number" then
                     categoryManager:Add(quesitonText, options, value, self)
-                    UpdateCategory(categoryNames[self])
                     return
                 else
                     print("Custom quiz error | [" .. quesitonText .. "] question value needs to be a number or nil")
@@ -1360,6 +1368,21 @@ function CustomCategoryManager:Add(quesitonText: string, options: { string }, va
         print("Custom quiz error | [" .. quesitonText .. "] quesitonText is not a string")
     end
     notify("Can't add custom question", "See the output for more information")
+end
+
+-- Schedules a sort & refresh of the category dropdown when custom category adding is done
+function CustomCategoryManager.scheduleRefresh()
+    if not CustomCategoryManager.refreshScheduled then
+        CustomCategoryManager.refreshScheduled = true
+        task.defer(function() -- Defer to run after all custom categories are added
+            -- We're only running this once as it is expensive
+            table.sort(categoriesToSend, sortAlphabetically)
+            table.sort(categoriesToSendDetailed, sortAlphabetically)
+            table.sort(categoryTable, sortAlphabetically)
+            categoryDropdown:Refresh(categoryTable)
+            CustomCategoryManager.refreshScheduled = false
+        end)
+    end
 end
 
 local function sortUserPoints(type)
