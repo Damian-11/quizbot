@@ -1,4 +1,4 @@
-local VERSION = "2.7.0"
+local VERSION = "2.7.1"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -898,7 +898,7 @@ gaming:Add("What is the best-selling video game of all time?", {"Minecraft", "FI
 gaming:Add("What was the first commercially successful video game?", {"Pong", "Donkey Kong Country", "Super Mario Bros", "Spacewar"})
 gaming:Add("What is the name of the main character in the Legend of Zelda series?", {"Link", "Zelda", "Ganon", "Mario"})
 gaming:Add("What video game did Mario, the Nintendo character, first appear in?", {"Donkey Kong", "Super Mario Bros", "Marios Cement Factory", "Mario Bros"}, 2)
-gaming:Add("What is the name of the virtual reality device developed by Valve?", {"Valve Index", "Oculus Rift", "Meta Quest", "Valve VR"})
+gaming:Add("What is the name of the latest virtual reality device developed by Valve?", {"Steam Frame", "Oculus Rift", "Meta Quest", "Valve VR"})
 
 local gaming2 = categoryManager.New("Gaming", "medium")
 gaming2:Add("Which company created the Mario franchise?", {"Nintendo", "Sony", "Microsoft", "Sega"})
@@ -1089,19 +1089,19 @@ music:Add("Which of these is not a wind instrument?", {"Violin", "Flute", "Clari
 music:Add("What is the national anthem of the United States called?", {"The Star Spangled Banner", "God Save the Queen", "La Marseillaise", "O Canada"})
 music:Add("Which of these is not a type of guitar?", {"Cello", "Acoustic", "Electric", "Bass"}, 2)
 
-local brainrot = categoryManager.New("Brainrot", "easy") -- based on wikiHow's brainrot quiz
+local brainrot = categoryManager.New("Brainrot", "easy")
 brainrot:Add("What's the word for those strange little men stuck in toilets?", {"Skibidi", "Toilet snakes", "Plumbing gnomes", "Bowl boys"})
-brainrot:Add("Which of these terms refers to taking a bit of your friend's food?", {"Fanum tax", "Treat toll", "Goodie tax", "Snack sneaking"})
+brainrot:Add("What is it called when someone talks at lenght in an irritating manner?", {"Yapping", "Woofing", "Ranting", "Monologuing"})
 brainrot:Add("Which term describes someone who's a bit of a lone wolf—perhaps even better than an alpha?", {"Sigma", "Omega", "Beta", "Zeta"})
 brainrot:Add("In which U.S. state are wild, strange, unfortunate things most likely to happen, according to the internet?", {"Only in Ohio", "Only in Alaska", "Only in Florida", "Only in Mississippi"})
-brainrot:Add("Which of these people is a football player known for their rizz?", {"Baby Gronk", "Baby Yoda", "Grimace", "Kai Cenat"}, 2)
+brainrot:Add("What is the name of the purple McDonad's drink?", {"Grimace Shake", "Sussy Punch", "Blueberry McFlurry", "Expired Shake"}, 2)
 
 local brainrot2 = categoryManager.New("Brainrot", "easy")
 brainrot2:Add("What does it mean to be 'cooked'?", {"In a really bad position", "Extremely hungry", "Feeling very tired", "Excited or thrilled"})
-brainrot2:Add("Who is your sunshine?", {"LeBonBon", "Baby Gronk", "Sigma Squidward", "BanBan"})
-brainrot2:Add("Finish the quote: 'Just put the ___ in the bag.'", {"Fries", "Money", "Skibidi", "Rizz"})
+brainrot2:Add("Fill in the blank: 'Erm, what the ___'?", {"sigma", "dog", "heck", "alpha"})
+brainrot2:Add("What is the term for excessively praising or complimenting someone?", {"Glazing", "Rizzing", "Gassing", "Fawning"})
 brainrot2:Add("Who is the main enemy of Skibidi Toilet?", {"Cameraman", "Janitor", "Skibidi Sink", "G-Man"}, 2)
-brainrot2:Add("What is the name of the purple McDonad's drink?", {"Grimace Shake", "Sussy Punch", "Blueberry McFlurry", "Expired Shake"})
+brainrot2:Add("Finish the quote: 'Just put the ___ in the bag.'", {"Fries", "Money", "Skibidi", "Rizz"})
 
 local gamerWords = categoryManager.New("Gamer Words", "easy")
 gamerWords:Add("What does 'GG' mean?", {"Good Game", "Get Good", "Great Goal", "Gamer Girl"})
