@@ -362,7 +362,7 @@ function question:Ask(): boolean
     self.rightAnswer = letters[self.rightAnswerIndex]
     if self.value > 1 then
         if settings.boothGameFullMode then
-            UpdateBoothgameTexts("⭐ | "..self.value.."x points", true)
+            UpdateBoothgameTexts("⭐ "..self.value.."x points", true)
         end
         SendMessageWhenReady("⭐ | "..self.value.."x points for question")
         task.wait(2)
