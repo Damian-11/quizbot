@@ -1,4 +1,4 @@
-local VERSION = "2.7.1"
+local VERSION = "2.7.2"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -34,8 +34,11 @@ local settings = {
     automaticLeaderboards = true,
     automaticCurrentQuizLeaderboard = false,
     automaticServerQuizLeaderboard = true,
-    signStatus = true,
-    romanNumbers = true,
+    signStatus = true, -- Booth game: update sign text with relevant question text and timer
+    boothStatus = true, -- Booth game: also update your booth's text
+    boothGameFullMode = true, -- Booth game: use the sign/booth for all text, including answer options
+    boothGameSuppressNotifs = true, -- Booth game: suppress push notifications while a quiz is running
+    romanNumbers = false, -- Booth game: use roman numerals to minimize filtering
     autoplay = false,
     repeatTagged = true,
     sendDetailedCategorylist = false, -- off by default since sending it this way tends to trigger the filter. Blame Roblox
@@ -220,26 +223,96 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
 end
 
 -- Booth Game integration may break at any point. I won't bother fixing it every time they update the remote events
-local boothGame = false
+local boothGame = (placeId == 8351248417)
 local signRemote
 local changeSignTextRemote
+local boothFunction
 if placeId == 8351248417 then
-    signRemote = replicatedStorage:WaitForChild("Remotes"):WaitForChild("SettingsRem")
+    -- For updating sign text
+    signRemote = replicatedStorage:WaitForChild("Remotes").SettingsRem
     changeSignTextRemote = replicatedStorage.SharedModules.TextInputPrompt.TextInputEvent
-    if signRemote and changeSignTextRemote then
-        boothGame = true
-    end
+    -- For changing the booth text and getting current booth text/image
+    boothFunction = replicatedStorage.Remotes.Booth.BoothFunc
 end
+
 local function UpdateSignText(text: string)
-    if not boothGame or not settings.signStatus or not text then -- only works in "booth game"
-        return
-    end
     local sign = localPlayer.Character:FindFirstChild("Text Sign") or localPlayer.Backpack:FindFirstChild("Text Sign")
     if not sign then
         return
     end
     signRemote:FireServer("SignServer")
-    changeSignTextRemote:FireServer(text)
+    changeSignTextRemote:FireServer({text})
+end
+
+local function GetCurrentBoothImageId()
+    local result = boothFunction:InvokeServer("GetMyBoothTextImage")
+    if result and result.IID then
+        return result.IID
+    end
+end
+
+
+local function UpdateBoothText(text: string)
+    local imageId = GetCurrentBoothImageId()
+    if imageId then
+        boothFunction:InvokeServer("ChangeTIM", text, imageId)
+    end
+end
+
+local currentText = ""
+-- After quiz is done, reset booth text to what it was previously
+local originalBoothText = ""
+local function CaptureBoothText()
+    if not boothGame or not boothFunction then
+        return
+    end
+    local result = boothFunction:InvokeServer("GetMyBoothTextImage")
+    -- Don't update originalBoothText if the text has been set by UpdateBoothgameTexts()
+    if result and result.Text and result.Text ~= currentText then
+        originalBoothText = result.Text
+    end
+end
+
+-- Updates both the sign and booth text (if enabled)
+local lastUpdateTick = 0
+local MIN_BOOTHGAME_UPDATE_COOLDOWN = 0.7
+local function UpdateBoothgameTexts(text: string, imporant: boolean)
+    if boothGame and text then
+        -- Enforce minimum rate limit
+        local timeSinceLastUpdate = tick() - lastUpdateTick
+        if timeSinceLastUpdate < MIN_BOOTHGAME_UPDATE_COOLDOWN then
+            -- If important, wait until an update can be performed instead of skipping
+            if imporant then
+                task.wait(MIN_BOOTHGAME_UPDATE_COOLDOWN - timeSinceLastUpdate)
+            else
+                return
+            end
+        end
+
+        if settings.signStatus and signRemote and changeSignTextRemote then
+            UpdateSignText(text)
+        end
+        if settings.boothStatus and boothFunction then
+            if text == "" then
+                UpdateBoothText(originalBoothText)
+            else
+                UpdateBoothText(text)
+            end
+        end
+        currentText = text
+        lastUpdateTick = tick()
+    end
+end
+
+-- Disables the annoying notificaion boxes from popping up each time sign/booth is updated
+local function SuppressBoothGameNotifications(suppress: boolean)
+    if not boothGame or not settings.boothGameSuppressNotifs then
+        return
+    end
+    local pushNotifScreenGui = localPlayer.PlayerGui:FindFirstChild("PushNotif")
+    if pushNotifScreenGui then
+        pushNotifScreenGui.Enabled = not suppress
+    end
 end
 
 local maxCharactersInMessage = 200
@@ -247,10 +320,7 @@ if placeId == 5118029260 then -- GRP cuts down messages at 100 characters
     maxCharactersInMessage = 100
 end
 
-local endMessage = "Quiz ended"
-if localPlayer.UserId == 2005147350 then
-    endMessage = "Quiz ended"
-end
+local endMessage = "🏁 Quiz ended"
 
 local function CalculateReadTime(text: string): number
     local timeToWait = #string.split(text, " ") * 0.4
@@ -287,11 +357,14 @@ function question:Ask(): boolean
     self.rightAnswerIndex = table.find(self.answers, rightAnswerBeforeShuffle)
     self.rightAnswer = letters[self.rightAnswerIndex]
     if self.value > 1 then
+        if settings.boothGameFullMode then
+            UpdateBoothgameTexts("⭐ | "..self.value.."x points", true)
+        end
         SendMessageWhenReady("⭐ | "..self.value.."x points for question")
         task.wait(2)
     end
     questionAnsweredBy = nil
-    UpdateSignText(self.mainQuestion)
+    UpdateBoothgameTexts(self.mainQuestion, true)
     currentQuestion = self
     questionPoints = self.value
     mainQuestionSent = true
@@ -315,12 +388,16 @@ function question:Ask(): boolean
             return true
         end
         if i ~= 1 then
-            task.wait(CalculateReadTime(v))
+            task.wait(CalculateReadTime(self.answers[i - 1]))
         end
         if questionAnsweredBy or not quizRunning then
             return true
         end
-        SendMessageWhenReady(letters[i]..")"..v, true) -- 1 = A) 2 = B) 3 = C) etc.
+        local answerOptionText = letters[i]..")"..v -- 1 = A) 2 = B) 3 = C) etc.
+        if settings.boothGameFullMode then
+            UpdateBoothgameTexts(answerOptionText, true)
+        end
+        SendMessageWhenReady(answerOptionText, true)
         answerOptionsSaid = i
     end
 end
@@ -678,7 +755,7 @@ local function awaitAnswer(targetQuestion)
             return
         end
         task.wait(settings.questionTimeout)
-        UpdateSignText(targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
+        UpdateBoothgameTexts("⏰ "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true)
         timeIsOut = true
         currentQuestion = nil
         questionAnsweredBy = nil
@@ -686,22 +763,27 @@ local function awaitAnswer(targetQuestion)
         SendMessageWhenReady("⏰ | Time is out! Correct answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true)
     end
     local function SignTime()
-        for timeLeft = settings.questionTimeout, 1, -1 do
+        timeLeft = settings.questionTimeout
+        while timeLeft > 0 do
             if questionAnsweredBy then
                 return
             end
-            if settings.romanNumbers then
-                UpdateSignText(tostring(intToRoman(timeLeft))) -- convert to roman number and then convert to string
-            else
-                UpdateSignText(tostring(timeLeft))
+            local roundedTimeLeft = math.round(math.abs(timeLeft))
+            -- Only update on uneven numbers to prevent rate limits
+            if roundedTimeLeft % 2 ~= 0 then
+                if settings.romanNumbers then
+                    task.defer(UpdateBoothgameTexts, tostring(intToRoman(roundedTimeLeft))) -- convert to roman number and then convert to string
+                else
+                    task.defer(UpdateBoothgameTexts, tostring(roundedTimeLeft))
+                end
             end
-            task.wait(1)
+            timeLeft -= task.wait(1)
         end
     end
     local timeoutCoroutine = coroutine.create(Timeout)
     local signTimeCoroutine = coroutine.create(SignTime)
     coroutine.resume(timeoutCoroutine)
-    if boothGame and settings.signStatus then
+    if boothGame then
         coroutine.resume(signTimeCoroutine)
     end
 
@@ -717,8 +799,8 @@ local function awaitAnswer(targetQuestion)
         coroutine.close(timeoutCoroutine)
         coroutine.close(signTimeCoroutine)
         pointManager.AddPoints(questionAnsweredBy, targetQuestion.value)
-        task.delay(0.5, function() -- delayed to give time to the signtimecoroutine to stop chanong sign text
-            UpdateSignText(targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
+        task.delay(0.5, function() -- delayed to give time to the signtimecoroutine to stop changing sign text
+            UpdateBoothgameTexts("✔️ "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true)
         end)
         SendMessageWhenReady("✔️ | "..questionAnsweredBy.DisplayName.." answered correctly. Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true, "[Player name filtered] answered correctly. Answer was: "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex])
         questionAnsweredBy = nil
@@ -741,6 +823,7 @@ local function awaitAnswer(targetQuestion)
                 if currentLength + #user + (2 * #tempuserList) >= maxCharactersInMessage then -- maxCharactersInMessage is the limit for chat messages in Roblox. For each user, we are adding 2 more characters (, )
                     if firstIteration then
                         SendMessageWhenReady("✔️ | Players who answered correctly: "..table.concat(tempuserList, ", "))
+                        UpdateBoothgameTexts("✔️ "..targetQuestion.rightAnswer..")"..targetQuestion.answers[targetQuestion.rightAnswerIndex], true)
                         firstIteration = false
                     else
                         SendMessageWhenReady(table.concat(tempuserList, ", "))
@@ -1431,7 +1514,7 @@ local function sendLeaderboard(type: string, message: string, triggeredByUser: b
                 return
             end
             Chat(medalEmojis[i]..displayName.." (@"..username..") - "..points.." "..pointWord)
-            UpdateSignText(medalEmojis[i]..displayName)
+            UpdateBoothgameTexts(medalEmojis[i]..displayName, true)
         end
     end
     task.wait(2.5)
@@ -1512,10 +1595,12 @@ local function startQuiz(category: string)
     if not isFreeToRunQuiz() then
         return
     end
+    SuppressBoothGameNotifications(true)
+    CaptureBoothText()
     quizRunning = true
     pointManager.ClearQuizPoints()
     Chat('🚀 | Initiating "'..category..'" quiz...')
-    UpdateSignText(category)
+    UpdateBoothgameTexts(category)
     task.wait(3)
     local loopIterations = 0
     for _, v in pairs(categoryLookupTable[category][1]) do
@@ -1547,12 +1632,7 @@ local function startQuiz(category: string)
     if loopIterations ~= 0 and settings.automaticLeaderboards and settings.automaticCurrentQuizLeaderboard then
         sendLeaderboard("Current quiz", "📜 | ")
     end
-    UpdateSignText(endMessage)
-    task.delay(15, function()
-        if not quizRunning then
-            UpdateSignText("")
-        end
-    end)
+    UpdateBoothgameTexts(endMessage, true)
     if settings.automaticLeaderboards and settings.automaticServerQuizLeaderboard then
         sendLeaderboard("Server", "🏆 | Quiz ended. ")
         task.wait(2)
@@ -1560,7 +1640,13 @@ local function startQuiz(category: string)
         SendMessageWhenReady("🏁 | Quiz ended")
         task.wait(3)
     end
-    UpdateSignText(endMessage)
+    task.delay(8, function()
+        if not quizRunning then
+            UpdateBoothgameTexts("", true)
+            task.wait(6)
+            SuppressBoothGameNotifications(false)
+        end
+    end)
     quizRunning = false
     if settings.autoplay then
         if not autoplayChosenCategories[categoryLookupTable[category][2]] then -- insert the category into autoplayChosenCategories[difficulty]
@@ -1568,10 +1654,13 @@ local function startQuiz(category: string)
         else
             table.insert(autoplayChosenCategories[categoryLookupTable[category][2]], category)
         end
+        UpdateBoothgameTexts("🎲 Picking next category...", true)
         Chat("🎲 | Picking next category...")
         local chosenCategory = choseAutoplayCategory()
         task.wait(6)
         startQuiz(chosenCategory)
+    else
+        UpdateBoothgameTexts(endMessage, true)
     end
 end
 
@@ -2100,6 +2189,48 @@ disableServerLeaderboardToggle = settingsTab:CreateToggle({
     end
 })
 
+if boothGame then
+    settingsTab:CreateSection("Booth game settings")
+    settingsTab:CreateToggle({
+        Name = "Enable sign status (sign item required)",
+        CurrentValue = settings.signStatus,
+        Callback = function(value)
+            settings.signStatus = value
+        end
+    })
+    settingsTab:CreateToggle({
+        Name = "Enable booth status (must own a booth)",
+        CurrentValue = settings.boothStatus,
+        Callback = function(value)
+            settings.boothStatus = value
+        end
+    })
+    settingsTab:CreateToggle({
+        Name = "List answer options on sign and booth",
+        CurrentValue = settings.boothGameFullMode,
+        Callback = function(value)
+            settings.boothGameFullMode = value
+        end
+    })
+    settingsTab:CreateToggle({
+        Name = "Use roman numbers for sign timer to bypass filtering",
+        CurrentValue = settings.romanNumbers,
+        Callback = function(value)
+            settings.romanNumbers = value
+        end
+    })
+    settingsTab:CreateToggle({
+        Name = "Disable push notifications while a quiz is in progress",
+        CurrentValue = settings.boothGameSuppressNotifs,
+        Callback = function(value)
+            if not value then
+                SuppressBoothGameNotifications(false)
+            end
+            settings.boothGameSuppressNotifs = value
+        end
+    })
+end
+
 settingsTab:CreateSection("Miscellaneous settings")
 settingsTab:CreateToggle({
     Name = "Do not repeat tagged messages",
@@ -2115,18 +2246,7 @@ settingsTab:CreateToggle({
         settings.sendDetailedCategorylist = value
     end
 })
-if boothGame then
-    settingsTab:CreateToggle({
-    Name = "Disable sign status (booth game only)",
-    Callback = function(value)
-        settings.signStatus = not value
-    end})
-    settingsTab:CreateToggle({
-    Name = "Don't use roman numbers for sign timer (may get tagged)",
-    Callback = function(value)
-        settings.romanNumbers = not value
-    end})
-end
+
 if outdated then
     settingsTab:CreateToggle({
         Name = "Disable outdated version alerts",
