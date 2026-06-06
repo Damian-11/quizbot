@@ -310,8 +310,12 @@ local function SuppressBoothGameNotifications(suppress: boolean)
         return
     end
     local pushNotifScreenGui = localPlayer.PlayerGui:FindFirstChild("PushNotif")
+    local pushNotifSound = replicatedStorage.SharedModules.PushHandler.Presets.MainPreset.Sound
     if pushNotifScreenGui then
         pushNotifScreenGui.Enabled = not suppress
+    end
+    if pushNotifSound then
+        pushNotifSound.Volume = if suppress then 0 else 0.4 -- 0.4 is the default value
     end
 end
 
