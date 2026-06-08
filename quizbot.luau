@@ -1,4 +1,4 @@
-local VERSION = "2.7.2"
+local VERSION = "2.7.3"
 
 local letters = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
 local userCooldowns = {}
@@ -36,9 +36,10 @@ local settings = {
     automaticServerQuizLeaderboard = true,
     signStatus = true, -- Booth game: update sign text with relevant question text and timer
     boothStatus = true, -- Booth game: also update your booth's text
-    boothGameFullMode = true, -- Booth game: use the sign/booth for all text, including answer options
+    boothGameFullMode = false, -- Booth game: use the sign/booth for all text, including answer options
     boothGameSuppressNotifs = true, -- Booth game: suppress push notifications while a quiz is running
     romanNumbers = false, -- Booth game: use roman numerals to minimize filtering
+    disableChat = false, -- Booth game: communicate exclusively through sign/booth
     autoplay = false,
     repeatTagged = true,
     sendDetailedCategorylist = false, -- off by default since sending it this way tends to trigger the filter. Blame Roblox
@@ -76,7 +77,10 @@ function intToRoman(num)
     return roman
 end
 
-local function Chat(msg)
+local function Chat(msg, force)
+    if settings.disableChat and not force then
+        return
+    end
     textChatService.TextChannels.RBXGeneral:SendAsync(msg)
 end
 
@@ -184,7 +188,7 @@ local mainQuestionSent: boolean
 local messageFiltered: boolean -- set to false once main question gets asked successfully without being filtered
 local lastMessageTime: number -- time at which the last message was picked up by the antifilering function
 function SendMessageWhenReady(message: string, important: boolean?, altMessage: string?) -- sends message so roblox won't rate limit it. if message is "important", script will send it again if it gets filtered/tagged first time. Altmessage is the message to send instead of original if it gets tagged
-    if not quizRunning then
+    if not quizRunning or settings.disableChat then
         return
     end
     if not settings.repeatTagged then
@@ -210,7 +214,7 @@ function SendMessageWhenReady(message: string, important: boolean?, altMessage: 
     end
     if important then
         lastMessageTime = tick()
-        while (not antiFilteringDone or mainQuestionSent) and quizRunning do -- yields until the anti filter functions have done their job
+        while (not antiFilteringDone or mainQuestionSent) and quizRunning and settings.repeatTagged do -- yields until the anti filter functions have done their job
             task.wait()
             if tick() - lastMessageTime > 4.5 then -- prevents the antifiltering functions yielding forever in case the message fails to send
                 notify("Failed to Send Quiz Message", "Message rate limit exceeded. Avoid sending messages in the chat while a quiz is running. This could also be caused by high network latency.", nil, 10)
@@ -244,40 +248,45 @@ local function UpdateSignText(text: string)
     changeSignTextRemote:FireServer({text})
 end
 
-local function GetCurrentBoothImageId()
-    local result = boothFunction:InvokeServer("GetMyBoothTextImage")
-    if result and result.IID then
-        return result.IID
-    end
-end
-
-
-local function UpdateBoothText(text: string)
-    local imageId = GetCurrentBoothImageId()
-    if imageId then
-        boothFunction:InvokeServer("ChangeTIM", text, imageId)
-    end
-end
-
 local currentText = ""
 -- After quiz is done, reset booth text to what it was previously
 local originalBoothText = ""
-local function CaptureBoothText()
+local boothDecalId = 0
+local function CaptureBoothTextAndImage()
     if not boothGame or not boothFunction then
         return
     end
     local result = boothFunction:InvokeServer("GetMyBoothTextImage")
     -- Don't update originalBoothText if the text has been set by UpdateBoothgameTexts()
-    if result and result.Text and result.Text ~= currentText then
-        originalBoothText = result.Text
+    if result then
+        if result.Text and result.Text ~= currentText then
+            originalBoothText = result.Text
+        end
+        if result.IID then
+            boothDecalId = result.IID
+        end
     end
 end
 
+local function UpdateBoothText(text: string)
+    task.spawn(boothFunction.InvokeServer, boothFunction, "ChangeTIM", text, boothDecalId)
+end
+
+-- Since the question timeout starts immediately after the
+-- last answer option has been said, its reading time becomes "owed".
+-- quizbot must ensure that the last answer option remains visible for this time.
+-- Currently, this is only used by booth game intergariton, and the value of
+-- this variable is the tick at which the debt will have been repaid
+local readTimeOwedTick = 0
+
 -- Updates both the sign and booth text (if enabled)
 local lastUpdateTick = 0
-local MIN_BOOTHGAME_UPDATE_COOLDOWN = 0.7
+local MIN_BOOTHGAME_UPDATE_COOLDOWN = 1
 local function UpdateBoothgameTexts(text: string, imporant: boolean)
     if boothGame and text then
+        if not imporant and settings.boothGameFullMode and readTimeOwedTick > tick() then
+            return
+        end
         -- Enforce minimum rate limit
         local timeSinceLastUpdate = tick() - lastUpdateTick
         if timeSinceLastUpdate < MIN_BOOTHGAME_UPDATE_COOLDOWN then
@@ -403,6 +412,7 @@ function question:Ask(): boolean
         end
         SendMessageWhenReady(answerOptionText, true)
         answerOptionsSaid = i
+        readTimeOwedTick = tick() + CalculateReadTime(self.answers[i])
     end
 end
 
@@ -430,14 +440,14 @@ local function splitIntoMessages(itemTable: { string }, separtor: string, clearF
         local messageNumberString = string.format("(%d/%d)", messageIndex, #messages) -- [current message/amount of messages]
         if messageIndex == 2 or messageIndex == 3 then
             if clearFilter then
-                Chat("Waiting for filter...") -- hacky solution that prevents the second message getting filtered (works sometimes)
+                Chat("Waiting for filter...", true) -- hacky solution that prevents the second message getting filtered (works sometimes)
             end
             task.wait(5)
         end
         if quizRunning then
             return
         end
-        Chat(message.." "..messageNumberString)
+        Chat(message.." "..messageNumberString, true)
         task.wait(waitTime or CalculateReadTime(message) * 0.7) -- multiplied by 0.7 because full read time is too long for longer texts
     end
 end
@@ -591,7 +601,8 @@ function pointManager.ResetAllPoints()
 end
 -------
 
-local function requestSendMessage(message)
+-- Used for low priority messages, will not wait
+local function SendMessageIfPossible(message)
     timeSinceLastMessage = tick() - timeSinceLastMessage
     if timeSinceLastMessage > 2.5 then
         Chat(message)
@@ -675,7 +686,7 @@ local function startChatListening(message: string, player: Player)
             end
         elseif mode == "Quiz" then
             if awaitingAnswer then
-                requestSendMessage("❌ | "..player.DisplayName.." wrong answer. Try again in "..tostring(settings.userCooldown).." seconds.")
+                SendMessageIfPossible("❌ | "..player.DisplayName.." wrong answer. Try again in "..tostring(settings.userCooldown).." seconds.")
             end
             table.insert(userCooldowns, player.Name)
             task.delay(settings.userCooldown, function()
@@ -692,7 +703,7 @@ local function processMessage(player: Player, message: string)
     if player ~= localPlayer then
         startChatListening(message, player)
     else
-        if not (importantMessageSent or mainQuestionSent) or not quizRunning or not messageBeforeFilter then
+        if not (importantMessageSent or mainQuestionSent) or not quizRunning or not messageBeforeFilter or not settings.repeatTagged then
             return
         end
         message = string.gsub(message, "&amp;", "&") -- & gets picked up as &amp; Needs to be corrected back to &
@@ -773,8 +784,8 @@ local function awaitAnswer(targetQuestion)
                 return
             end
             local roundedTimeLeft = math.round(math.abs(timeLeft))
-            -- Only update on uneven numbers to prevent rate limits
-            if roundedTimeLeft % 2 ~= 0 then
+            -- Only update on even numbers to prevent rate limits
+            if roundedTimeLeft % 2 == 0 then
                 if settings.romanNumbers then
                     task.defer(UpdateBoothgameTexts, tostring(intToRoman(roundedTimeLeft))) -- convert to roman number and then convert to string
                 else
@@ -1338,7 +1349,7 @@ local function sendCategories()
             notify("Warning: possible filtering", "Turn off detailed categories in settings if the category list gets filtered")
             waitTime = 7
         end
-        Chat("❓ | Quiz topics:")
+        Chat("❓ | Quiz topics:", true)
         task.wait(3)
         -- only use the clear filter option when detailed leaderboards are on (more prone to filtering)
         if settings.sendDetailedCategorylist then
@@ -1600,7 +1611,7 @@ local function startQuiz(category: string)
         return
     end
     SuppressBoothGameNotifications(true)
-    CaptureBoothText()
+    CaptureBoothTextAndImage()
     quizRunning = true
     pointManager.ClearQuizPoints()
     Chat('🚀 | Initiating "'..category..'" quiz...')
@@ -1691,11 +1702,11 @@ local function sendRules()
     end
     currentlySending = "The rules are"
     if mode == "Quiz" then
-        Chat("📜 | Quiz mode rules:")
+        Chat("📜 | Quiz mode rules:", true)
         task.wait(2)
         splitIntoMessages(quizModeRules, " ", 2)
     elseif mode == "Kahoot" then
-        Chat("📜 | Kahoot mode rules:")
+        Chat("📜 | Kahoot mode rules:", true)
         task.wait(2)
         splitIntoMessages(kahootModeRules, " ")
     end
@@ -2094,9 +2105,9 @@ settingsTab:CreateDropdown({
     Callback = function(option)
         mode = option[1]
         if mode == "Quiz" then
-            Chat("❓ | Quiz mode enabled")
+            Chat("❓ | Quiz mode enabled", true)
         elseif mode == "Kahoot" then
-            Chat("✉️ | Kahoot mode enabled")
+            Chat("✉️ | Kahoot mode enabled", true)
         end
     end
 })
@@ -2193,6 +2204,10 @@ disableServerLeaderboardToggle = settingsTab:CreateToggle({
     end
 })
 
+local originalDoNotRepeatState = not settings.repeatTagged
+local doNotRepeatTaggedToggle
+local originalFullModeState = settings.boothGameFullMode
+local fullModeToggle
 if boothGame then
     settingsTab:CreateSection("Booth game settings")
     settingsTab:CreateToggle({
@@ -2207,12 +2222,37 @@ if boothGame then
         CurrentValue = settings.boothStatus,
         Callback = function(value)
             settings.boothStatus = value
+            if not value and originalBoothText ~= "" then
+                UpdateBoothText(originalBoothText)
+            end
         end
     })
     settingsTab:CreateToggle({
+        Name = "Do not send quiz messages in the chat",
+        CurrentValue = settings.disableChat,
+        Callback = function(value)
+            settings.disableChat = value
+            -- Anti-filtering system must be disabled if no messages are being sent
+            if value then
+                originalDoNotRepeatState = not settings.repeatTagged
+                doNotRepeatTaggedToggle:Set(true)
+                originalFullModeState = settings.boothGameFullMode
+                fullModeToggle:Set(true)
+            else
+                doNotRepeatTaggedToggle:Set(originalDoNotRepeatState)
+                fullModeToggle:Set(originalFullModeState)
+            end
+        end
+    })
+    fullModeToggle = settingsTab:CreateToggle({
         Name = "List answer options on sign and booth",
         CurrentValue = settings.boothGameFullMode,
         Callback = function(value)
+            if not value and settings.disableChat then
+                notify("Can't change setting", 'This setting cannot be changed while the "do not send quiz messages in the chat" setting is enabled')
+                fullModeToggle:Set(true)
+                return
+            end
             settings.boothGameFullMode = value
         end
     })
@@ -2236,11 +2276,17 @@ if boothGame then
 end
 
 settingsTab:CreateSection("Miscellaneous settings")
-settingsTab:CreateToggle({
+doNotRepeatTaggedToggle = settingsTab:CreateToggle({
     Name = "Do not repeat tagged messages",
     CurrentValue = not settings.repeatTagged,
     Callback = function(value)
+        if not value and settings.disableChat then
+            notify("Can't change setting", 'This setting cannot be changed while the "do not send quiz messages in the chat" setting is enabled')
+            doNotRepeatTaggedToggle:Set(true)
+            return
+        end
         settings.repeatTagged = not value
+        messageFiltered = false
     end
 })
 settingsTab:CreateToggle({
