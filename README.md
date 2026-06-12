@@ -5,7 +5,7 @@ To run the script, paste this code into your preferred executor:
 local CustomCategoryManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()
 
 --[[ Custom category template:
-local myCategory = CustomCategoryManager.New("Category Name") -- create a new category
+local myCategory = CustomCategoryManager.New("Category Name", "easy") -- create a new "easy" category
 myCategory:Add("This is a test question?", {"Correct Answer", "Wrong Answer1", "Wrong Answer2", "Wrong Answer3"}) -- add a question
 myCategory:Add("What does the word 'Agua' mean in Spanish?", {"Water", "Milk", "Dog", "The number 5"}, 2) -- add a double point question
 
@@ -36,9 +36,9 @@ You will only be dealing with `categories` and `questions` while creating custom
 The script returns the CustomCategoryManager class, which can be used to create custom categories using the CustomCategoryManager.New() function.
 ```lua
 local CustomCategoryManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Damian-11/quizbot/master/quizbot.luau"))()
-local spanish = CustomCategoryManager.New("Spanish") -- create a new category
+local spanish = CustomCategoryManager.New("Spanish", "medium") -- create a new category
 ```
-The `CustomCategoryManager.New("Category Name")` function will create a new category with the name you specifed. If the category already exists, it will simply add a new quiz to the existing category.
+The `CustomCategoryManager.New("Category Name", "difficulty")` function will create a new category with the name and difficulty you specifed. If the category already exists, it will simply add a new quiz to the existing category.
 For the sake of this tutorial, I will be creating a *Spanish* category with questions about the meanings of Spanish words.
 
 **Note: You should never worry about two categories using the same name. Just enter your desired category name, and the script will automatically handle the naming for you.**
@@ -50,7 +50,7 @@ spanish:Add("What does the word 'Agua' mean in Spanish?", {"Water", "Milk", "Dog
 The `:Add()` method accepts three arguments:
 - **The question text (string).** This is the message that the script will send once it reaches this question. Make it short and concise.
   `"What does the word 'Agua' mean in Spanish?"`
-- **Possible choices (table containing a list of strings).** **The first item in the table is the correct answer.** The order you specify the answer options in does not affect the order they are sent in. The order they are sent in will always be randomized.
+- **Possible choices (array of strings).** **The first item in the table is the correct answer.** The order you specify the answer options in does not affect the order they are sent in. The order they are sent in will always be randomized.
   `{"Water", "Milk", "Dog", "The number 5"}`. The correct answer here is *Water*, since it is the first item.
 - **Number of points. (number, optional).** If you do not specify this value, the default (1) will be used. This is the amount of points the person who answered the question will receive. I recommend only setting this
   to 2 for hard questions. Otherwise, leave it blank to use the default.
@@ -73,6 +73,9 @@ These are some tips/rules that'll help you make good categories:
     I'd recommend testing the filter by yourself, as Roblox does allow some historical questions (see quizzes such as WWI, WWII, Anarchy, and Cold War for examples of what Roblox **does allow.**
 
 ## Difficulties
+
+> [!TIP]
+> It is good practice to always include a difficulty (preferably either "easy", "medium", or "hard") when creating custom quizzes to prevent them from being assigned to the default "missing difficulty" difficulty. This ensures that the quiz displays cleanly in the UI and integrates with the autoplay filter system.
 
 You might have noticed that difficulties are present in many of the premade categories, such as:
 - Math
@@ -99,7 +102,7 @@ Creating new quizzes with difficulties is very straightforward. You just need to
 local myCategory = CustomCategoryManager.New("Category Name", "Difficulty name")
 ```
 The difficulty name can be anything (difficulties are not case sensitive, e.g. EASY = easy). The ones used in the premade quizzes are: `easy`, `medium`, `hard`.
-I'd recommend sticking to those if you can to prevent overcomplicating things, but you're free to create your own difficulties if you want.
+I'd recommend sticking to those if you can for the sake of simplicity, but you're free to create your own difficulties if you want.
 Difficulties only get appended to the names of quizzes when the category contains two or more quizzes with different difficulties from each other.
 Let's say you wanted to create a *birds* quiz:
 ```lua 
